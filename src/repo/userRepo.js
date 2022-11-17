@@ -4,13 +4,17 @@ const bcrypt = require("bcrypt");
 const register = (body) => {
   return new Promise((resolve, reject) => {
     const { email, password, role } = body;
+    console.log("repo user");
+    console.log(email);
+    console.log(password);
+    console.log(role);
     bcrypt.hash(password, 10, (error, hashedPassword) => {
       if (error) {
         console.log(error);
         return reject(error);
       }
       const query =
-        "insert into users (email, password, role) values ($1,$2,$3) returning id";
+        "insert into users (email, password, role) values ($1, $2, $3) returning id";
       postgreDb.query(
         query,
         [email, hashedPassword, role],

@@ -6,6 +6,7 @@ const usersRepo = require("../repo/userRepo");
 const auth = {
   register: async (req, res) => {
     try {
+      console.log(req.body);
       let regex = new RegExp("[a-z0-9]+@[a-z]+.[a-z]{2,3}");
       if (regex.test(req.body.email) === false) {
         return response(res, {
@@ -84,7 +85,7 @@ const auth = {
         email: checkEmail.rows[0].email,
         role: checkEmail.rows[0].role,
       };
-
+      console.log(process.env.SECRET_KEY);
       const token = await jwt.sign(payload, process.env.SECRET_KEY, {
         expiresIn: "24h",
         issuer: process.env.ISSUER,

@@ -1,12 +1,11 @@
 require("dotenv").config();
-const { response } = require("express");
 const express = require("express");
 const postgreDb = require("./src/config/postgre");
 // const redis = require("./src/config/redis");
 const mainRouter = require("./src/routes/mainRouter");
 const server = express();
 // init port
-const PORT = process.env.PORT;
+const PORT = 8090;
 const morgan = require("morgan");
 const logger = morgan(
   ":method :url :status :res[content-length] - :response-time ms"
@@ -16,6 +15,9 @@ const cors = require("cors");
 const corsOptions = {
   origin: "*",
 };
+
+console.log("sampai sini");
+
 postgreDb
   .connect()
   .then(() => {
@@ -27,14 +29,15 @@ postgreDb
     // parser untuk body agar input dapat dilakukan lebih dinamis
     server.use(express.json());
     server.use(express.urlencoded({ extended: false }));
+    server.use(logger);
+    //  semua request ke server akan didelegasikan ke mainRouter
+    server.use(mainRouter);
     // server siap menerima request
     server.listen(PORT, () => {
       console.log(`Server is running at port ${PORT}`);
     });
-    server.use(logger);
-    //  semua request ke server akan didelegasikan ke mainRouter
-    server.use(mainRouter);
   })
   .catch((error) => {
+    console.log("err");
     console.log(error);
   });
