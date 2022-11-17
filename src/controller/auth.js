@@ -1,7 +1,7 @@
 const response = require("../helper/response");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const usersRepo = require("../repo/userRepo");
+const usersRepo = require("../repo/usersRepo");
 
 const auth = {
   register: async (req, res) => {

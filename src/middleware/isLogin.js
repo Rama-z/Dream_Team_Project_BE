@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const response = require("../helper/response");
-const userRepo = require("../repo/userRepo");
+const userRepo = require("../repo/usersRepo");
 
 const isLogin = async (req, res, next) => {
   const token = req.header("x-access-token");

@@ -81,7 +81,7 @@ const deleteWhitelistToken = (token) => {
 const getUserProfile = (id) => {
   return new Promise((resolve, reject) => {
     const query =
-      "select id, username, role, gender, email, image, name_store, store_description, phone_number, delivery_address from users where id = $1";
+      "select id, username, role, gender, email, image, name_store, store_description, phone_number, delivery_address, created_at, updated_at from users where id = $1";
     postgreDb.query(query, [id], (error, result) => {
       if (error) {
         console.log(error);
