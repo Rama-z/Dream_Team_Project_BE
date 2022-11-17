@@ -10,10 +10,10 @@ const {
 } = require("../controller/promo");
 const { isLogin } = require("../middleware/isLogin");
 
-promoRouter.get("/", searchPromo);
-promoRouter.get("/:id", searchPromoId);
-promoRouter.post("/", create);
-promoRouter.patch("/:id", edit);
-promoRouter.delete("/", drop);
+// promoRouter.get("/", searchPromo);
+// promoRouter.get("/:id", searchPromoId);
+// promoRouter.post("/", create);
+// promoRouter.patch("/:id", edit);
+// promoRouter.delete("/", drop);
 
 module.exports = promoRouter;
