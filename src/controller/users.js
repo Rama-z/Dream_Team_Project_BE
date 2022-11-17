@@ -66,7 +66,7 @@ const usersController = {
         body = { ...body, image };
       }
 
-      const result = await usersRepo.editUsers(bpdy, id);
+      const result = await usersRepo.editUsers(body, id);
       return response(res, {
         status: 200,
         data: { id, ...body },
