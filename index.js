@@ -36,5 +36,6 @@ postgreDb
     });
   })
   .catch((error) => {
+    console.log("sini");
     console.log(error);
   });

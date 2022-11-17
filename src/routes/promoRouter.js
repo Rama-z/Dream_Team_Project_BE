@@ -5,15 +5,15 @@ const {
   searchPromo,
   searchPromoId,
   create,
-  edit,
+  update,
   drop,
 } = require("../controller/promo");
 const { isLogin } = require("../middleware/isLogin");
 
-// promoRouter.get("/", searchPromo);
-// promoRouter.get("/:id", searchPromoId);
-// promoRouter.post("/", create);
-// promoRouter.patch("/:id", edit);
-// promoRouter.delete("/", drop);
+promoRouter.get("/", searchPromo);
+promoRouter.get("/:id", searchPromoId);
+promoRouter.post("/", create);
+promoRouter.patch("/:id", update);
+promoRouter.delete("/:id", drop);
 
 module.exports = promoRouter;

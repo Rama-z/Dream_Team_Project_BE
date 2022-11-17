@@ -12,8 +12,8 @@ const prefix = "/raz";
 
 // connection subrouter to mainrouter
 mainRouter.use(`${prefix}/auth`, authRouter);
-mainRouter.use(`${prefix}/product`, promoRouter);
-mainRouter.use(`${prefix}/promo`, productRouter);
+mainRouter.use(`${prefix}/product`, productRouter);
+mainRouter.use(`${prefix}/promo`, promoRouter);
 mainRouter.use(`${prefix}/users`, usersRouter);
 
 // mainRouter.get("/welcome", (req, res) => {
