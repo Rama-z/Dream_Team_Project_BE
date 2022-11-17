@@ -16,8 +16,6 @@ const corsOptions = {
   origin: "*",
 };
 
-console.log("sampai sini");
-
 postgreDb
   .connect()
   .then(() => {
@@ -38,6 +36,5 @@ postgreDb
     });
   })
   .catch((error) => {
-    console.log("err");
     console.log(error);
   });
