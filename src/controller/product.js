@@ -3,7 +3,11 @@ const sendResponse = require("../helper/response");
 
 const searchProduct = async (req, res) => {
   try {
-    const response = await repoProduct.searchProduct(req.query);
+    console.log(req.baseUrl);
+    console.log(req.route.path);
+    console.log(req.get("HOST"));
+    const hostApi = `${req.protocol}://${req.get("HOST")}`;
+    const response = await repoProduct.searchProduct(req.query, hostApi);
     return sendResponse.success(res, response.status, response);
   } catch (error) {
     console.log(error);

@@ -26,75 +26,111 @@ module.exports = {
     });
   },
 
-  searchProduct: (params) => {
+  searchProduct: (params, api) => {
     return new Promise((resolve, reject) => {
-      const { search, categories, sort, limit, page } = params;
-      let query = `select * from products p `;
-      let countQuery = "select count(p.id) as count from products p";
-      let isCheck = true;
-      let link = "";
-
-      if (sort) {
-        if (sort.toLowerCase() === "popular") {
-          query = "";
-          countQuery = "";
-        }
+      const {
+        search,
+        category,
+        brand,
+        size,
+        color,
+        sort,
+        minPrice,
+        maxPrice,
+        limit,
+        page,
+      } = params;
+      let query = `select p.id, p.product_name, p.price, p.description_product, s."size" as size, c2.color, ip.image, stock, sold, c.category, b.brand from products p
+      join brands b on b.id = p.brand_id 
+      join categories c on c.id = p.category_id 
+      join colors c2 on c2.id = p.color_id 
+      join image_products ip on ip.product_id = p.id 
+      join sizes s on s.id = p.size_id`;
+      // let countQuery = "select count(p.id) as count from products p";
+      let link = `${api}/raz/product/?`;
+      if (category || brand || size || color || search || !search) {
+        query += ` where lower(p.product_name) like lower('%${
+          search || ""
+        }%') and lower(c.category) like lower('%${
+          category || ""
+        }%') and lower(b.brand) like lower('%${
+          brand || ""
+        }%') and lower(s."size") like lower('%${
+          size || ""
+        }%') and lower(c2.color) like lower('%${color || ""}%') `;
+        link += `search=${search || ""}&category=${category || ""}&brand=${
+          brand || ""
+        }&size=${size || ""}&color=${color || ""}&`;
       }
-
-      if (search) {
-        link += `search${search}&`;
-        query += `${
-          isCheck ? "WHERE" : "AND"
-        } lower(p.product_name) like lower('%${search}%') `;
-        countQuery += `${
-          isCheck ? "WHERE" : "AND"
-        } lower(p.product_name) like lower('%${search}%') `;
-        isCheck = false;
+      if (sort.toLowerCase() === "oldest") {
+        query += "order by p.created_at asc ";
+        link += "sort=oldest&";
       }
-
-      if (categories && categories !== "") {
-        query += `${
-          isCheck ? "WHERE" : "AND"
-        } lower(c.category_name) like lower('${categories}') `;
-        countQuery += `${
-          isCheck ? "WHERE" : "AND"
-        } lower(c.category_name) like lower('${categories}') `;
-        isCheck = false;
-        link += `categories=${categories}&`;
+      if (sort.toLowerCase() === "newest") {
+        query += "order by p.created_at desc ";
+        link += "sort=newest&";
       }
-
-      if (sort) {
-        query += "group by p.id, c.category_name ";
-        countQuery += "group by p.id";
-        if (sort.toLowerCase() === "popular") {
-          query += "order by count(t.qty) desc ";
-          link += "sort=popular&";
-        }
-        if (sort.toLowerCase() === "oldest") {
-          query += "order by p.created_at asc ";
-          link += "sort=oldest&";
-        }
-        if (sort.toLowerCase() === "newest") {
-          query += "order by p.created_at desc ";
-          link += "sort=newest&";
-        }
-        if (sort.toLowerCase() === "cheapest") {
-          query += "order by p.price asc ";
-          link += "sort=cheapest&";
-        }
-        if (sort.toLowerCase() === "priciest") {
-          query += "order by p.price desc ";
-          link += "sort=prciest&";
-        }
+      if (sort.toLowerCase() === "cheapest") {
+        query += "order by p.price asc ";
+        link += "sort=cheapest&";
       }
-      query += "limit $1 offset $2";
-      // console.log(countQuery);
-      // console.log(link);
-      const sqlLimit = limit ? limit : 8;
+      if (sort.toLowerCase() === "priciest") {
+        query += "order by p.price desc ";
+        link += "sort=prciest&";
+      }
+      if (sort.toLowerCase() === "") {
+        query += "";
+        link += "sort=&";
+      }
+      query += ` limit ${limit || 12}`;
+      link += `page=${page || 1}&limit=${limit || 8}`;
+      console.log(link);
+      /* const sqlLimit = limit ? limit : 8;
       const sqlOffset =
-        !page || page === "1" ? 0 : (parseInt(page) - 1) * parseInt(sqlLimit);
+        page || page === "1" ? 0 : (parseInt(page) - 1) * parseInt(sqlLimit); */
       // console.log(sqlLimit);
-      postgreDb.query(countQuery, (error, result) => {
+      // postgreDb.query(countQuery, (error, result) => {
+      //   if (error) {
+      //     console.log(error);
+      //     return reject({
+      //       status: 500,
+      //       msg: "internal Server Error",
+      //     });
+      //   }
+      // return resolve({ status: 200, msg: "success", data: result.rows });
+      // const totalData =
+      //   sort && sort.toLowerCase() === "popular"
+      //      result.rows.length
+      //     : result.rows[0].count;
+
+      // const currentPage = page ? parseInt(page) : 1;
+      // const totalPage =
+      //   parseInt(sqlLimit) > totalData
+      //      1
+      //     : Math.ceil(totalData / parseInt(sqlLimit));
+
+      // const prev =
+      //   currentPage === 1
+      //     (tanda tanya) null
+      //     : link + `page=${currentPage - 1}&limit=${parseInt(sqlLimit)}`;
+
+      // const next =
+      //   currentPage === totalPage
+      //      null
+      //     : link + `page=${currentPage + 1}&limit=${parseInt(sqlLimit)}`;
+      // const meta = {
+      //   page: currentPage,
+      //   totalPage,
+      //   limit: parseInt(sqlLimit),
+      //   totalData: parseInt(totalData),
+      //   prev,
+      //   next,
+      // };
+      // console.log(sqlLimit);
+      // console.log(sqlOffset);
+      // console.log(query);
+      // const value = [sqlLimit, sqlOffset];
+      postgreDb.query(query, (error, result) => {
         if (error) {
           console.log(error);
           return reject({
@@ -102,62 +138,21 @@ module.exports = {
             msg: "internal Server Error",
           });
         }
-        // return resolve({ status: 200, msg: "success", data: result.rows });
-        const totalData =
-          sort && sort.toLowerCase() === "popular"
-            ? result.rows.length
-            : result.rows[0].count;
-
-        const currentPage = page ? parseInt(page) : 1;
-        const totalPage =
-          parseInt(sqlLimit) > totalData
-            ? 1
-            : Math.ceil(totalData / parseInt(sqlLimit));
-
-        const prev =
-          currentPage === 1
-            ? null
-            : link + `page=${currentPage - 1}&limit=${parseInt(sqlLimit)}`;
-
-        const next =
-          currentPage === totalPage
-            ? null
-            : link + `page=${currentPage + 1}&limit=${parseInt(sqlLimit)}`;
-        const meta = {
-          page: currentPage,
-          totalPage,
-          limit: parseInt(sqlLimit),
-          totalData: parseInt(totalData),
-          prev,
-          next,
-        };
-        console.log(sqlLimit);
-        console.log(sqlOffset);
-        console.log(query);
-        const value = [sqlLimit, sqlOffset];
-        postgreDb.query(query, value, (error, result) => {
-          if (error) {
-            console.log(error);
-            return reject({
-              status: 500,
-              msg: "internal Server Error",
-            });
-          }
-          // console.log(countQuery, "\n", query, totalData, result.rows.length);
-          if (result.rows.length === 0)
-            return reject({
-              status: 404,
-              msg: "Data Not Found",
-            });
-          return resolve({
-            status: 200,
-            msg: "List products",
-            data: result.rows,
-            meta,
+        // console.log(countQuery, "\n", query, totalData, result.rows.length);
+        if (result.rows.length === 0)
+          return reject({
+            status: 404,
+            msg: "Data Not Found",
           });
+        return resolve({
+          status: 200,
+          msg: "List products",
+          data: result.rows,
+          // meta: meta || "",
         });
       });
     });
+    // });
   },
 
   create: (body, id, file) => {
@@ -165,7 +160,7 @@ module.exports = {
       const images = file;
       const timestamp = Date.now() / 1000;
       const query =
-        "insert into products (user_id, price, product_name, category_id, brand_id, size_id, color_id, description_product, stock, sold, conditions) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) returning *";
+        "insert into products (user_id, price, product_name, brand_id, size_id, color_id, description_product, stock, sold, conditions) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning *";
       const {
         price,
         product_name,
@@ -178,15 +173,12 @@ module.exports = {
         sold,
         conditions,
       } = body;
-      // const imageUrl = `${file.url}`;
-      console.log(query);
       postgreDb.query(
         query,
         [
           id,
           price,
           product_name,
-          category_id,
           brand_id,
           size_id,
           color_id,
@@ -207,7 +199,6 @@ module.exports = {
           const productId = result.rows[0].id;
           let imageValues = "values";
           const prepareImageValues = [];
-          console.log(images.length);
           images.forEach((image, index) => {
             if (index !== images.length - 1) {
               imageValues += `($${1 + index * 4}, $${
@@ -225,7 +216,6 @@ module.exports = {
             prepareImageValues.push(productId, image, timestamp, timestamp);
           });
           const addImageQuery = `insert into image_products (product_id, image, created_at, updated_at) ${imageValues} returning *`;
-          console.log(addImageQuery);
           postgreDb.query(
             addImageQuery,
             prepareImageValues,
@@ -237,11 +227,57 @@ module.exports = {
               const imageResult = [];
               result.rows.forEach((image) => imageResult.push(image.image));
               createdProduct = { ...createdProduct, image: imageResult };
-              return resolve({
-                status: 201,
-                msg: `Product ${createdProduct.product_name} created successfully`,
-                data: createdProduct,
+              const categories = JSON.parse(category_id);
+              const prepareCategoryValues = [];
+              let categoryValues = "values";
+              categories.forEach((categoryId, index) => {
+                if (index !== categories.length - 1) {
+                  categoryValues += `($${1 + index * 4}, $${
+                    2 + index * 4
+                  }, to_timestamp($${3 + index * 4}), to_timestamp($${
+                    4 + index * 4
+                  })), `;
+                } else {
+                  categoryValues += `($${1 + index * 4}, $${
+                    2 + index * 4
+                  }, to_timestamp($${3 + index * 4}), to_timestamp($${
+                    4 + index * 4
+                  }))`;
+                }
+                prepareCategoryValues.push(
+                  productId,
+                  categoryId,
+                  timestamp,
+                  timestamp
+                );
               });
+              const insertCategotyQuery = `insert into product_category (product_id, category_id, created_at, updated_at) ${categoryValues} returning *`;
+              postgreDb.query(
+                insertCategotyQuery,
+                prepareCategoryValues,
+                (error, result) => {
+                  if (error) {
+                    console.log(error);
+                    return reject({
+                      status: 500,
+                      msg: "Internal Server Error",
+                    });
+                  }
+                  const categoryResult = [];
+                  result.rows.forEach((category) =>
+                    categoryResult.push(category.category_id)
+                  );
+                  createdProduct = {
+                    ...createdProduct,
+                    category: categoryResult,
+                  };
+                  return resolve({
+                    status: 201,
+                    msg: `Product ${createdProduct.product_name} created successfully`,
+                    data: createdProduct,
+                  });
+                }
+              );
             }
           );
         }
