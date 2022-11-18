@@ -40,14 +40,14 @@ const usersController = {
   getUserById: async (req, res) => {
     try {
       const result = await usersRepo.getUserProfile(req.userPayload.user_id);
-      return response(res, {
+      return response.response(res, {
         status: 200,
         data: result.rows,
         message: "Get success",
       });
     } catch (error) {
       console.log(error);
-      return response(res, {
+      return response.response(res, {
         error,
         status: 500,
         message: "Internal server error",
@@ -67,14 +67,14 @@ const usersController = {
       }
 
       const result = await usersRepo.editUsers(body, id);
-      return response(res, {
+      return response.response(res, {
         status: 200,
         data: { id, ...body },
         message: "Edit profile success",
       });
     } catch (error) {
       console.log(error);
-      return response(res, {
+      return response.response(res, {
         error,
         status: 500,
         message: "Internal server error",
