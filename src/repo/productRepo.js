@@ -160,13 +160,12 @@ module.exports = {
     });
   },
 
-  create: (body) => {
+  create: (body, id, file) => {
     return new Promise((resolve, reject) => {
       // const timestamp = Date.now() / 1000;
       const query =
         "insert into products (user_id, price, product_name, category_id, brand_id, size_id, color_id, description_product, stock, sold, conditions) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) returning *";
       const {
-        user_id,
         price,
         product_name,
         category_id,
@@ -178,12 +177,11 @@ module.exports = {
         sold,
         conditions,
       } = body;
-      console.log(user_id);
       // const imageUrl = `${file.url}`;
       postgreDb.query(
         query,
         [
-          user_id,
+          id,
           price,
           product_name,
           category_id,
@@ -196,7 +194,6 @@ module.exports = {
           conditions,
         ],
         (error, queryResult) => {
-          console.log("sini");
           if (error) {
             console.log(error);
             return reject({

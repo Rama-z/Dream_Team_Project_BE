@@ -23,7 +23,11 @@ const searchProductId = async (req, res) => {
 
 const create = async (req, res) => {
   try {
-    const response = await repoProduct.create(req.body);
+    const response = await repoProduct.create(
+      req.body,
+      req.userPayload.user_id,
+      req.file
+    );
     sendResponse.success(res, 200, response);
   } catch (error) {
     console.log(error);

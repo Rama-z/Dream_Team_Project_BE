@@ -44,8 +44,20 @@ const body = (...allowedKeys) => {
     }
     console.log(newBody);
     req.body = newBody;
+    console.log("body aman");
     next();
   };
 };
 
-module.exports = { registerBody, loginBody, body };
+const imgs = () => {
+  return (req, res, next) => {
+    let { files } = req;
+    // console.log(files);
+    if (!files) {
+      files = null;
+    }
+    next();
+  };
+};
+
+module.exports = { registerBody, loginBody, body, imgs };
