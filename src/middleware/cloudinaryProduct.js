@@ -14,7 +14,7 @@ const productUploader = async (req, res, next) => {
         const buffer = element.buffer;
         const ext = path.extname(element.originalname).toString();
         const datauri = parser.format(ext, buffer);
-        const filesName = `product_${body.name}_${index + 1}`;
+        const filesName = `image_${body.product_name}_${index + 1}`;
         const cloudinaryOpt = {
           public_id: filesName,
           folder: "Raz-Dream_Team",

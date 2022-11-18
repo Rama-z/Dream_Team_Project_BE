@@ -44,7 +44,7 @@ module.exports = {
           });
         return resolve({
           status: 200,
-          data: result.rows[0],
+          data: result.rows,
         });
       });
     });

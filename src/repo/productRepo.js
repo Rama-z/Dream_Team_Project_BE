@@ -162,7 +162,8 @@ module.exports = {
 
   create: (body, id, file) => {
     return new Promise((resolve, reject) => {
-      // const timestamp = Date.now() / 1000;
+      const images = file;
+      const timestamp = Date.now() / 1000;
       const query =
         "insert into products (user_id, price, product_name, category_id, brand_id, size_id, color_id, description_product, stock, sold, conditions) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) returning *";
       const {
@@ -178,6 +179,7 @@ module.exports = {
         conditions,
       } = body;
       // const imageUrl = `${file.url}`;
+      console.log(query);
       postgreDb.query(
         query,
         [
@@ -193,7 +195,7 @@ module.exports = {
           sold,
           conditions,
         ],
-        (error, queryResult) => {
+        (error, result) => {
           if (error) {
             console.log(error);
             return reject({
@@ -201,11 +203,47 @@ module.exports = {
               msg: "Internal Server Error",
             });
           }
-          resolve({
-            status: 201,
-            msg: ` added to database`,
-            data: { ...queryResult.rows[0] },
+          let createdProduct = { ...result.rows[0] };
+          const productId = result.rows[0].id;
+          let imageValues = "values";
+          const prepareImageValues = [];
+          console.log(images.length);
+          images.forEach((image, index) => {
+            if (index !== images.length - 1) {
+              imageValues += `($${1 + index * 4}, $${
+                2 + index * 4
+              }, to_timestamp($${3 + index * 4}), to_timestamp($${
+                4 + index * 4
+              })), `;
+            } else {
+              imageValues += `($${1 + index * 4}, $${
+                2 + index * 4
+              }, to_timestamp($${3 + index * 4}), to_timestamp($${
+                4 + index * 4
+              }))`;
+            }
+            prepareImageValues.push(productId, image, timestamp, timestamp);
           });
+          const addImageQuery = `insert into image_products (product_id, image, created_at, updated_at) ${imageValues} returning *`;
+          console.log(addImageQuery);
+          postgreDb.query(
+            addImageQuery,
+            prepareImageValues,
+            (error, result) => {
+              if (error) {
+                console.log(error);
+                return reject({ status: 500, msg: "Internal Server" });
+              }
+              const imageResult = [];
+              result.rows.forEach((image) => imageResult.push(image.image));
+              createdProduct = { ...createdProduct, image: imageResult };
+              return resolve({
+                status: 201,
+                msg: `Product ${createdProduct.product_name} created successfully`,
+                data: createdProduct,
+              });
+            }
+          );
         }
       );
     });
