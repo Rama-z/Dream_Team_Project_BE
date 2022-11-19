@@ -61,7 +61,7 @@ module.exports = {
         limit,
         page,
       } = params;
-      let query = `select distinct p.id, p.product_name, p.price, p.description_product, s."size" as size, c2.color, ip.image, stock, sold, c.category, b.brand from products p
+      let query = `select distinct p.id, p.product_name, p.price, p.description_product, s."size" as size, c2.color, (select ip.image from image_products ip where ip.product_id = p.id limit 1), stock, sold, c.category, b.brand from products p
       join product_category pc on pc.product_id = p.id 
       join brands b on b.id = p.brand_id 
       join categories c on c.id = pc.category_id 
@@ -197,6 +197,47 @@ module.exports = {
             data: result.rows,
             meta: meta || "",
           });
+        });
+      });
+    });
+  },
+
+  searchRelatedProduct: () => {
+    return new Promise((resolve, reject) => {
+      const productId = req.params.id;
+      const getBrandQuery =
+        "select p.brand_id  from products p where p.id = $1";
+
+      postgreDb.query(getBrandQuery, (error, result) => {
+        if (error) {
+          console.log(error);
+          return reject({ status: 500, msg: "Internal Server Error" });
+        }
+        if (result.rows.length === 0)
+          return reject({
+            status: 404,
+            msg: "Data Not Found",
+          });
+        const brandId = result.rows[0].brand_id;
+        const getCategoryQuery =
+          "select pc.category_id from product_categories pc where pc.product_id = $1";
+
+        postgreDb.query(getCategoryQuery, (error, result) => {
+          if (error) {
+            console.log(error);
+            return reject({ status: 500, msg: "Internal Server Error" });
+          }
+          if (result.rows.length === 0)
+            return reject({
+              status: 404,
+              msg: "Data Not Found",
+            });
+          const categoryResult = result.rows;
+          const categories = [];
+          categoryResult.forEach((category) =>
+            categories.push(category.category_id)
+          );
+          const prepareValues = [parseInt(productId), brandId];
         });
       });
     });
