@@ -6,6 +6,7 @@ const {
   searchProductId,
   create,
   searchRelatedProduct,
+  searchSellerProduct,
   update,
   drop,
 } = require("../controller/product");
@@ -14,6 +15,7 @@ const { memoryUpload, errorHandler } = require("../middleware/upload");
 const productUploader = require("../middleware/cloudinaryProduct.js");
 
 productRouter.get("/", searchProduct);
+productRouter.get("/seller", isLogin, searchSellerProduct);
 productRouter.get("/related/:id", searchRelatedProduct);
 productRouter.post(
   "/",
@@ -38,7 +40,6 @@ productRouter.post(
   validate.imgs(),
   create
 );
-
 productRouter.get("/:id", searchProductId);
 productRouter.patch("/:id", update);
 productRouter.delete("/:id", drop);

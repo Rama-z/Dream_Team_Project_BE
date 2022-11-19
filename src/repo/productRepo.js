@@ -281,26 +281,78 @@ module.exports = {
     });
   },
 
-  searchSellerProduct: (id) => {
+  searchSellerProduct: (queryParams, id, api) => {
     return new Promise((resolve, reject) => {
-      const query = `select p.id, p.product_name, p.price, (select ip.image from image_products ip where product_id = p.id limit 1) as image from products p 
-      where p.user_id = $1`;
-      const value = [id];
-      postgreDb.query(query, value, (error, result) => {
+      const { filter, limit, page } = queryParams;
+      let link = `${api}/raz/product/seller?`;
+      let countQuery =
+        "select count(p.id) as count from products p where user_id = $1 ";
+      let query = `select p.id, p.product_name, p.price, (select ip.image from image_products ip where product_id = p.id limit 1) as image from products p 
+      where p.user_id = $1 `;
+
+      if (filter.toLowerCase() === "") {
+        countQuery += "and p.deleted_at is null ";
+        query += "and p.deleted_at is null ";
+        link += "filter=&";
+      }
+      if (filter.toLowerCase() === "archived") {
+        countQuery += "and p.deleted_at is not null and p.stock != 0 ";
+        query += "and p.deleted_at is not null and p.stock != 0 ";
+        link += "filter=archived&";
+      }
+      if (filter.toLowerCase() === "soldout") {
+        countQuery += "and p.stock = 0 ";
+        query += "and p.stock = 0 ";
+        link += "filter=sold-out&";
+      }
+      query += "limit $2 offset $3";
+      postgreDb.query(countQuery, [id], (error, result) => {
         if (error) {
           console.log(error);
           return reject({ status: 500, msg: "Internal Server Error" });
         }
-        if (result.rows.length === 0)
-          return reject({
-            status: 404,
-            msg: "Data Not Found",
+        if (parseInt(result.rows[0].count) === 0)
+          return reject({ status: 404, msg: "Product not found" });
+        const totalData = parseInt(result.rows[0].count);
+        const sqlLimit = limit ? parseInt(limit) : 5;
+        const sqlOffset =
+          !page || page == 1 ? 0 : (parseInt(page) - 1) * sqlLimit;
+        const currentPage = page ? parseInt(page) : 1;
+        const totalPage =
+          totalData < sqlLimit ? 1 : Math.ceil(totalData / sqlLimit);
+
+        const prev =
+          currentPage === 1
+            ? null
+            : link + `page=${currentPage - 1}&limit=${sqlLimit}`;
+        const next =
+          currentPage === totalPage
+            ? null
+            : link + `page=${currentPage + 1}&limit=${sqlLimit}`;
+
+        const meta = {
+          page: parseInt(currentPage),
+          totalData: parseInt(totalData),
+          limit: parseInt(sqlLimit),
+          prev,
+          next,
+        };
+        postgreDb.query(query, [id, sqlLimit, sqlOffset], (error, result) => {
+          if (error) {
+            console.log(error);
+            return reject({ status: 500, msg: "Internal Server Error" });
+          }
+          if (result.rows.length === 0)
+            return reject({
+              status: 404,
+              msg: "Data Not Found",
+            });
+          return resolve({
+            status: 201,
+            msg: `Your Product List`,
+            data: result.rows,
+            meta,
           });
-        return resolve({
-          status: 201,
-          msg: `Product ${createdProduct.product_name} created successfully`,
-          data: result.rows,
-          meta,
         });
       });
     });

@@ -48,6 +48,20 @@ const searchRelatedProduct = async (req, res) => {
   }
 };
 
+const searchSellerProduct = async (req, res) => {
+  try {
+    const hostApi = `${req.protocol}://${req.get("HOST")}`;
+    const response = await repoProduct.searchSellerProduct(
+      req.query,
+      req.userPayload.user_id,
+      hostApi
+    );
+    sendResponse.success(res, 200, response);
+  } catch (error) {
+    sendResponse.error(res, 500, error);
+  }
+};
+
 const update = async (req, res) => {
   try {
     const response = await repoProduct.update(
@@ -76,6 +90,7 @@ module.exports = {
   searchProduct,
   searchProductId,
   searchRelatedProduct,
+  searchSellerProduct,
   create,
   update,
   drop,
