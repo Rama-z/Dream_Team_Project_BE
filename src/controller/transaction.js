@@ -85,10 +85,26 @@ const transactionController = {
     const user_id = req.userPayload.user_id;
     // console.log(req.userPayload);
     try {
-      const result = await transactionRepo.getTransactionItemBySeller(user_id);
+      const result = await transactionRepo.getTransactionBySeller(user_id);
+      // console.log(result.rows.length);
+      let temp = [];
+      await Promise.all(
+        result.rows.map(async (item) => {
+          const res = await transactionRepo.getImageByProductId(
+            item.product_id
+          );
+          console.log(res.rows);
+          if (res.rows.length > 0) {
+            const image = res.rows[0];
+            const data = { ...item, image: image.image };
+            temp.push(data);
+          }
+          temp.push(item);
+        })
+      );
       return response.response(res, {
         status: 200,
-        data: result.rows,
+        data: temp,
         // meta: meta,
         message: "Get checkout by seller success",
       });
