@@ -187,6 +187,53 @@ const getTransactionItem = (id) => {
   });
 };
 
+const getStockProduct = (id) => {
+  return new Promise((resolve, reject) => {
+    const query = "select stock, sold from products where products.id = $1";
+
+    postgreDb.query(query, [id], (error, result) => {
+      if (error) {
+        console.log(error);
+        return reject(error);
+      }
+      return resolve(result);
+    });
+  });
+};
+
+const updateStockProduct = (id, stock) => {
+  return new Promise((resolve, reject) => {
+    let query = "update products set stock = $1 where id = $2";
+
+    postgreDb.query(query, [id, stock], (error, result) => {
+      if (error) {
+        console.log(error);
+        return reject(error);
+      }
+      resolve(result);
+    });
+  });
+};
+
+const updateSoldProduct = (id, sold) => {
+  return new Promise((resolve, reject) => {
+    const query = "update products set sold = $1 where id = $2";
+    postgreDb.query(query, [id, sold], (error, result) => {
+      if (error) {
+        console.log(error);
+        return reject(error);
+      }
+      resolve(result);
+    });
+  });
+};
+
+const getOrderTracking = (order_id) => {
+  return new Promise((resolve, reject) => {
+    // const query = "select "
+  });
+};
+
 const transactionRepo = {
   createTransaction,
   createTransactionItem,
@@ -197,6 +244,9 @@ const transactionRepo = {
   getTransactionById,
   getTransactionItem,
   updatePayment,
+  getStockProduct,
+  updateStockProduct,
+  updateSoldProduct,
 };
 
 module.exports = transactionRepo;

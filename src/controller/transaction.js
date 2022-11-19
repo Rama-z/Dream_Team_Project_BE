@@ -45,6 +45,20 @@ const transactionController = {
 
       const transaction_id = checkout.rows[0].id;
       const { product_item } = req.body;
+
+      for (const item of product_item) {
+        const cekStock = await transactionRepo.getStockProduct(item.product_id);
+        // console.log(cekStock.rows[0]);
+        const stock = cekStock.rows[0];
+        const updateStock = stock - item.quantity;
+        if (updateStock < 0) {
+          return response.response(res, {
+            status: 400,
+            message: "Silahkan cek stok kembali",
+          });
+        }
+      }
+
       let transaction_item = [];
       await Promise.all(
         product_item.map(async (product) => {
@@ -82,6 +96,38 @@ const transactionController = {
         order_id,
         status_order: body.status_order,
       };
+
+      await Promise.all(
+        product_item.map(async (item) => {
+          const cekStock = await transactionRepo.getStockProduct(
+            item.product_id
+          );
+          // console.log(cekStock.rows[0]);
+          const stock = cekStock.rows[0];
+          const updateStock = stock.stock - item.quantity;
+          console.log(updateStock);
+          const result = await transactionRepo.updateStockProduct(
+            updateStock,
+            item.product_id
+          );
+        })
+      );
+
+      await Promise.all(
+        product_item.map(async (item) => {
+          const cekSold = await transactionRepo.getStockProduct(
+            item.product_id
+          );
+          const sold = cekSold.rows[0].sold;
+          // console.log(sold);
+          const updateSold = sold + item.quantity;
+          console.log(updateSold);
+          const result = await transactionRepo.updateSoldProduct(
+            updateSold,
+            item.product_id
+          );
+        })
+      );
 
       const midtrans = await paymentMidtrans(
         body.total_price,
@@ -216,7 +262,6 @@ const transactionController = {
   handleMidtrans: async (req, res) => {
     const { order_id, transaction_status } = req.body;
     try {
-      console.log(req.body);
       const status_order = transaction_status;
       const status_delivery = "Process";
       const payment_id = order_id;
@@ -225,7 +270,6 @@ const transactionController = {
         status_delivery,
         payment_id
       );
-      console.log(result);
       return response.response(res, {
         data: result,
         status: 200,
@@ -234,8 +278,20 @@ const transactionController = {
     } catch (error) {
       return response.response(res, {
         status: 500,
-        message: "Terjadi Error",
+        message: "Internal server error",
         error,
+      });
+    }
+  },
+
+  getOrderTracking: async (req, res) => {
+    try {
+    } catch (error) {
+      console.log(error);
+      return response.response(res, {
+        error,
+        status: 500,
+        message: "Internal server error",
       });
     }
   },

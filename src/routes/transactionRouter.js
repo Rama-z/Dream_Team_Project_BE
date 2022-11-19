@@ -11,6 +11,7 @@ const {
   getTransactionByCustomer,
   getTransactionById,
   handleMidtrans,
+  getOrderTracking,
 } = require("../controller/transaction");
 
 transactionRouter.post("/create", isLogin, createTransaction);
@@ -19,5 +20,6 @@ transactionRouter.patch("/update/:id", isLogin, editTransaction);
 transactionRouter.get("/checkout-seller", isLogin, getTransactionBySeller);
 transactionRouter.get("/checkout-customer", isLogin, getTransactionByCustomer);
 transactionRouter.get("/:id", isLogin, getTransactionById);
+transactionRouter.get("/order-tracking", isLogin, getOrderTracking);
 
 module.exports = transactionRouter;
