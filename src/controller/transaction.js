@@ -219,7 +219,11 @@ const transactionController = {
       const status_order = transaction_status;
       const status_delivery = "Process";
       const payment_id = order_id;
-      const result = await transactionRepo.updatePayment();
+      const result = await transactionRepo.updatePayment(
+        status_order,
+        status_delivery,
+        payment_id
+      );
       return response.response(res, {
         data: result,
         status: 200,
