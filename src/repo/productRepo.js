@@ -281,6 +281,31 @@ module.exports = {
     });
   },
 
+  searchSellerProduct: (id) => {
+    return new Promise((resolve, reject) => {
+      const query = `select p.id, p.product_name, p.price, (select ip.image from image_products ip where product_id = p.id limit 1) as image from products p 
+      where p.user_id = $1`;
+      const value = [id];
+      postgreDb.query(query, value, (error, result) => {
+        if (error) {
+          console.log(error);
+          return reject({ status: 500, msg: "Internal Server Error" });
+        }
+        if (result.rows.length === 0)
+          return reject({
+            status: 404,
+            msg: "Data Not Found",
+          });
+        return resolve({
+          status: 201,
+          msg: `Product ${createdProduct.product_name} created successfully`,
+          data: result.rows,
+          meta,
+        });
+      });
+    });
+  },
+
   create: (body, id, file) => {
     return new Promise((resolve, reject) => {
       const images = file;
@@ -321,6 +346,11 @@ module.exports = {
               msg: "Internal Server Error",
             });
           }
+          if (result.rows.length === 0)
+            return reject({
+              status: 404,
+              msg: "Data Not Found",
+            });
           let createdProduct = { ...result.rows[0] };
           const productId = result.rows[0].id;
           let imageValues = "values";
@@ -389,6 +419,11 @@ module.exports = {
                       msg: "Internal Server Error",
                     });
                   }
+                  if (result.rows.length === 0)
+                    return reject({
+                      status: 404,
+                      msg: "Data Not Found",
+                    });
                   const categoryResult = [];
                   result.rows.forEach((category) =>
                     categoryResult.push(category.category_id)
