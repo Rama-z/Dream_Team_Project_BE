@@ -7,6 +7,7 @@ const authRouter = require("./authRouter");
 const productRouter = require("./productRouter");
 const promoRouter = require("./promoRouter");
 const usersRouter = require("./usersRouter");
+const transactionRouter = require("./transactionRouter");
 
 const prefix = "/raz";
 
@@ -15,6 +16,7 @@ mainRouter.use(`${prefix}/auth`, authRouter);
 mainRouter.use(`${prefix}/product`, productRouter);
 mainRouter.use(`${prefix}/promo`, promoRouter);
 mainRouter.use(`${prefix}/users`, usersRouter);
+mainRouter.use(`${prefix}/transaction`, transactionRouter);
 
 // mainRouter.get("/welcome", (req, res) => {
 //   res.json({
