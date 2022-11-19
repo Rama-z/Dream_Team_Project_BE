@@ -4,7 +4,7 @@ const { body } = require("../middleware/validate");
 const createTransaction = (body, user_id) => {
   return new Promise((resolve, reject) => {
     const query =
-      "insert into transaction (user_id, sub_total, total_price, name_user, address, phone, promo_id, payment_method, shipping_method_id, order_id, status_order) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id";
+      "insert into transaction (user_id, sub_total, total_price, name_user, address, phone, promo_id, payment_method, shipping_method_id, order_id, payment_id) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id";
 
     const {
       sub_total,
@@ -16,7 +16,7 @@ const createTransaction = (body, user_id) => {
       payment_method,
       shipping_method_id,
       order_id,
-      status_order,
+      payment_id,
     } = body;
     postgreDb.query(
       query,
@@ -31,7 +31,7 @@ const createTransaction = (body, user_id) => {
         payment_method,
         shipping_method_id,
         order_id,
-        status_order,
+        payment_id,
       ],
       (error, result) => {
         if (error) {
@@ -89,6 +89,25 @@ const editTransaction = (body, params) => {
       }
       resolve(result);
     });
+  });
+};
+
+const updatePayment = (status_order, status_delivery, payment_id) => {
+  return new Promise((resolve, reject) => {
+    let query =
+      "update transaction set status_order = $1, status_delivery = $2 where payment_id = $3";
+
+    postgreDb.query(
+      query,
+      [status_order, status_delivery, payment_id],
+      (error, result) => {
+        if (error) {
+          console.log(error);
+          return reject(error);
+        }
+        resolve(result);
+      }
+    );
   });
 };
 
@@ -177,6 +196,7 @@ const transactionRepo = {
   getImageByProductId,
   getTransactionById,
   getTransactionItem,
+  updatePayment,
 };
 
 module.exports = transactionRepo;

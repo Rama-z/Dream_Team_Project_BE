@@ -1,5 +1,26 @@
 const transactionRepo = require("../repo/transactionRepo");
 const response = require("../helper/response");
+const midtransClient = require("midtrans-client");
+
+let coreApi = new midtransClient.CoreApi({
+  isProduction: false,
+  serverKey: process.env.SERVER_KEY_MIDTRANS,
+  clientKey: process.env.CLIENT_KEY_MIDTRANS,
+});
+
+const paymentMidtrans = async (total_price, bank, payment_id) => {
+  const parameter = {
+    payment_type: "bank_transfer",
+    transaction_details: {
+      gross_amount: parseInt(total_price),
+      order_id: payment_id,
+    },
+    bank_transfer: {
+      bank: bank,
+    },
+  };
+  return await coreApi.charge(parameter);
+};
 
 const transactionController = {
   createTransaction: async (req, res) => {
@@ -8,12 +29,16 @@ const transactionController = {
       console.log(req.userPayload);
       const user_id = req.userPayload.user_id;
       const order_id = `RAZ${Math.floor(Math.random() * 1000000000000000)}`;
+      const payment_id = `RAZ-${Math.floor(
+        Math.random() * 100000000000000000000
+      )}`;
       // console.log(order_id);
 
       const checkout = await transactionRepo.createTransaction(
         {
           ...body,
           order_id,
+          payment_id,
         },
         user_id
       );
@@ -57,9 +82,15 @@ const transactionController = {
         order_id,
         status_order: body.status_order,
       };
+
+      const midtrans = await paymentMidtrans(
+        body.total_price,
+        body.payment_method,
+        payment_id
+      );
       return response.response(res, {
         status: 200,
-        data: result,
+        data: { result, midtrans },
         message: "create transaction success",
       });
     } catch (error) {
@@ -179,6 +210,26 @@ const transactionController = {
         error,
         status: 500,
         message: "Internal server error",
+      });
+    }
+  },
+  handleMidtrans: async (req, res) => {
+    const { order_id, transaction_status } = req.body;
+    try {
+      const status_order = transaction_status;
+      const status_delivery = "Process";
+      const payment_id = order_id;
+      const result = await transactionRepo.updatePayment();
+      return response.response(res, {
+        data: result,
+        status: 200,
+        message: "get checkout by id succes",
+      });
+    } catch (error) {
+      return response.response(res, {
+        status: 500,
+        message: "Terjadi Error",
+        error,
       });
     }
   },

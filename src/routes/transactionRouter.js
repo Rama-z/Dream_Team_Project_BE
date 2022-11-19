@@ -10,9 +10,11 @@ const {
   getTransactionBySeller,
   getTransactionByCustomer,
   getTransactionById,
+  handleMidtrans,
 } = require("../controller/transaction");
 
 transactionRouter.post("/create", isLogin, createTransaction);
+transactionRouter.post("/handlemidtrans", handleMidtrans);
 transactionRouter.patch("/update/:id", isLogin, editTransaction);
 transactionRouter.get("/checkout-seller", isLogin, getTransactionBySeller);
 transactionRouter.get("/checkout-customer", isLogin, getTransactionByCustomer);
