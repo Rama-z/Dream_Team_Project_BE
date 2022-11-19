@@ -95,27 +95,10 @@ const editTransaction = (body, params) => {
 const getTransactionItemBySeller = (user_id) => {
   console.log(user_id);
   return new Promise((resolve, reject) => {
-    let query =
-      "select transaction_item.id, transaction_item.quantity, transaction_item.total_price, transaction.status_order, products.id as product_id, products.product_name, products.price, image_products.image from transaction_item join products on transaction_item.product_id = products.id join transaction on transaction_item.transaction_id = transaction.id left join image_products on image_products.product_id = products.id where transaction_item.seller_id = 1";
     // let query =
-    //   "select * from transaction_item where transaction_item.seller_id = $1";
-
-    // query += ` LIMIT ${limit} OFFSET ${offset}`;
-    postgreDb.query(query, (error, result) => {
-      if (error) {
-        console.log(error);
-        return reject(error);
-      }
-      return resolve(result);
-    });
-  });
-};
-
-const getTransactionById = (user_id) => {
-  console.log(user_id);
-  return new Promise((resolve, reject) => {
+    // "select transaction_item.transaction_id, transaction_item.quantity, transaction_item.total_price, transaction.status_order, products.id as product_id, products.product_name, products.price, image_products.image from transaction_item join products on transaction_item.product_id = products.id join transaction on transaction_item.transaction_id = transaction.id left join image_products on image_products.product_id = products.id where transaction_item.seller_id = 1";
     let query =
-      "select * from transaction_item where transaction_item.transaction_id = $1";
+      "select transaction.id, transaction_item.transaction_id, transaction_item.quantity, transaction_item.total_price, transaction.status_order, products.id as product_id, products.product_name, products.price, image_products.image from transaction_item inner join products on products.id = transaction_item.product_id left outer join image_products on products.id = image_products.product_id left join transaction on transaction.id = transaction_item.transaction_id  where transaction_item.seller_id = 1";
 
     // query += ` LIMIT ${limit} OFFSET ${offset}`;
     postgreDb.query(query, (error, result) => {
@@ -127,6 +110,23 @@ const getTransactionById = (user_id) => {
     });
   });
 };
+
+// const getTransactionById = (user_id) => {
+//   console.log(user_id);
+//   return new Promise((resolve, reject) => {
+//     let query =
+//       "select * from transaction_item where transaction_item.transaction_id = $1";
+
+//     // query += ` LIMIT ${limit} OFFSET ${offset}`;
+//     postgreDb.query(query, (error, result) => {
+//       if (error) {
+//         console.log(error);
+//         return reject(error);
+//       }
+//       return resolve(result);
+//     });
+//   });
+// };
 
 // const getImageProduct =
 
@@ -135,7 +135,7 @@ const transactionRepo = {
   createTransactionItem,
   editTransaction,
   getTransactionItemBySeller,
-  getTransactionById,
+  // getTransactionById,
 };
 
 module.exports = transactionRepo;
