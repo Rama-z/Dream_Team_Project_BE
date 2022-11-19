@@ -61,7 +61,7 @@ module.exports = {
         limit,
         page,
       } = params;
-      let query = `select p.id, p.product_name, p.price, p.description_product, s."size" as size, c2.color, ip.image, stock, sold, c.category, b.brand from products p
+      let query = `select distinct p.id, p.product_name, p.price, p.description_product, s."size" as size, c2.color, ip.image, stock, sold, c.category, b.brand from products p
       join product_category pc on pc.product_id = p.id 
       join brands b on b.id = p.brand_id 
       join categories c on c.id = pc.category_id 
