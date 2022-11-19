@@ -39,6 +39,15 @@ const create = async (req, res) => {
   }
 };
 
+const searchRelatedProduct = async (req, res) => {
+  try {
+    const response = await repoProduct.searchRelatedProduct(req);
+    sendResponse.success(res, response.status, response);
+  } catch (error) {
+    sendResponse.error(res, error.status, error);
+  }
+};
+
 const update = async (req, res) => {
   try {
     const response = await repoProduct.update(
@@ -66,6 +75,7 @@ const drop = async (req, res) => {
 module.exports = {
   searchProduct,
   searchProductId,
+  searchRelatedProduct,
   create,
   update,
   drop,

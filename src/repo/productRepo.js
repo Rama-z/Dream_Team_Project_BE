@@ -202,13 +202,13 @@ module.exports = {
     });
   },
 
-  searchRelatedProduct: () => {
+  searchRelatedProduct: (req) => {
     return new Promise((resolve, reject) => {
-      const productId = req.params.id;
-      const getBrandQuery =
-        "select p.brand_id  from products p where p.id = $1";
-
-      postgreDb.query(getBrandQuery, (error, result) => {
+      const productId = [req.params.id];
+      const getBrandQuery = "select p.brand_id from products p where p.id = $1";
+      postgreDb.query(getBrandQuery, productId, (error, result) => {
+        console.log(getBrandQuery);
+        console.log(result.rows);
         if (error) {
           console.log(error);
           return reject({ status: 500, msg: "Internal Server Error" });
@@ -218,11 +218,12 @@ module.exports = {
             status: 404,
             msg: "Data Not Found",
           });
+
         const brandId = result.rows[0].brand_id;
         const getCategoryQuery =
-          "select pc.category_id from product_categories pc where pc.product_id = $1";
-
-        postgreDb.query(getCategoryQuery, (error, result) => {
+          "select pc.category_id from product_category pc where pc.product_id = $1";
+        postgreDb.query(getCategoryQuery, productId, (error, result) => {
+          console.log(result.rows);
           if (error) {
             console.log(error);
             return reject({ status: 500, msg: "Internal Server Error" });
@@ -233,11 +234,48 @@ module.exports = {
               msg: "Data Not Found",
             });
           const categoryResult = result.rows;
+          console.log("sini?");
+          console.log(result.rows);
           const categories = [];
           categoryResult.forEach((category) =>
             categories.push(category.category_id)
           );
           const prepareValues = [parseInt(productId), brandId];
+          let relatedQuery = `select distinct p.id, p.product_name, p.price, (select ip.image from image_products ip where ip.product_id = $1 limit 1) from products p
+          join product_category pc on pc.product_id = p.id
+          join categories c on c.id  = pc.category_id
+          where p.id != $1 and p.deleted_at is null and p.brand_id = $2 and c.id in (`;
+          categories.forEach((e, index, array) => {
+            if (index === array.length - 1) {
+              relatedQuery += `$${index + 3}`;
+              prepareValues.push(e);
+            } else {
+              relatedQuery += `$${index + 3}, `;
+              prepareValues.push(e);
+            }
+          });
+          relatedQuery += `) limit 9`;
+
+          postgreDb.query(relatedQuery, prepareValues, (error, result) => {
+            if (error) {
+              console.log(error);
+              return reject({
+                status: 500,
+                msg: "internal Server Error",
+              });
+            }
+            if (result.rows.length === 0) {
+              return reject({
+                status: 404,
+                msg: "Data Not Found",
+              });
+            }
+            return resolve({
+              status: 200,
+              msg: "Related Products",
+              data: result.rows,
+            });
+          });
         });
       });
     });

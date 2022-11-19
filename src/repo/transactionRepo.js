@@ -5,7 +5,6 @@ const createTransaction = (body, user_id) => {
   return new Promise((resolve, reject) => {
     const query =
       "insert into transaction (user_id, sub_total, total_price, name_user, address, phone, promo_id, payment_method, shipping_method_id, order_id, payment_id) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id";
-
     const {
       sub_total,
       total_price,
