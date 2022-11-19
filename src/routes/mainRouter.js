@@ -18,10 +18,10 @@ mainRouter.use(`${prefix}/promo`, promoRouter);
 mainRouter.use(`${prefix}/users`, usersRouter);
 mainRouter.use(`${prefix}/transaction`, transactionRouter);
 
-// mainRouter.get("/welcome", (req, res) => {
-//   res.json({
-//     msg: "welcome in Raz Market",
-//   });
-// });
+mainRouter.get("/welcome", (req, res) => {
+  res.json({
+    msg: "welcome in Raz Market",
+  });
+});
 
 module.exports = mainRouter;
