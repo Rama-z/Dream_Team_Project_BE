@@ -18,18 +18,21 @@ const usersController = {
       //   console.log(isValid);
 
       if (isValid === false) {
-        return response(res, { status: 403, message: "Old password is wrong" });
+        return response.response(res, {
+          status: 403,
+          message: "Old password is wrong",
+        });
       }
 
       const password = await bcrypt.hash(body.new_password, 10);
       await usersRepo.editPassword(password, id);
-      return response(res, {
+      return response.response(res, {
         status: 200,
         message: "Password has been changed",
       });
     } catch (error) {
       console.log(error);
-      return response(res, {
+      return response.response(res, {
         error,
         status: 500,
         message: "Internal service error",
@@ -40,14 +43,14 @@ const usersController = {
   getUserById: async (req, res) => {
     try {
       const result = await usersRepo.getUserProfile(req.userPayload.user_id);
-      return response(res, {
+      return response.response(res, {
         status: 200,
         data: result.rows,
         message: "Get success",
       });
     } catch (error) {
       console.log(error);
-      return response(res, {
+      return response.response(res, {
         error,
         status: 500,
         message: "Internal server error",
@@ -67,14 +70,14 @@ const usersController = {
       }
 
       const result = await usersRepo.editUsers(body, id);
-      return response(res, {
+      return response.response(res, {
         status: 200,
         data: { id, ...body },
         message: "Edit profile success",
       });
     } catch (error) {
       console.log(error);
-      return response(res, {
+      return response.response(res, {
         error,
         status: 500,
         message: "Internal server error",
