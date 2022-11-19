@@ -216,10 +216,16 @@ const transactionController = {
   handleMidtrans: async (req, res) => {
     const { order_id, transaction_status } = req.body;
     try {
+      console.log(req.body);
       const status_order = transaction_status;
       const status_delivery = "Process";
       const payment_id = order_id;
-      const result = await transactionRepo.updatePayment();
+      const result = await transactionRepo.updatePayment(
+        status_order,
+        status_delivery,
+        payment_id
+      );
+      console.log(result);
       return response.response(res, {
         data: result,
         status: 200,
