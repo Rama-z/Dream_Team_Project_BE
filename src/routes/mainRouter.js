@@ -12,4 +12,10 @@ const prefix = "/raz";
 mainRouter.use(`${prefix}/auth`, authRouter);
 mainRouter.use(`${prefix}/users`, usersRouter);
 
+mainRouter.get("/", (req, res) => {
+  res.json({
+    msg: "Welcome to DreamTeam API",
+  });
+});
+
 module.exports = mainRouter;
