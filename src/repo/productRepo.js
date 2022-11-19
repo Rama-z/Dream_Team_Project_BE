@@ -18,9 +18,30 @@ module.exports = {
             status: 404,
             msg: "Product Not Found",
           });
-        return resolve({
-          status: 200,
-          data: result.rows[0],
+        let createdProduct = { ...result.rows[0] };
+        const imageQuery =
+          "select * from image_products ip join products p on p.id = ip.product_id where p.id = $1";
+        postgreDb.query(imageQuery, [id], (error, result) => {
+          if (error) {
+            console.log(error);
+            return reject({
+              status: 500,
+              msg: "Internal Server Error",
+            });
+          }
+          if (result.rows === 0)
+            return reject({
+              status: 404,
+              msg: "Product Not Found",
+            });
+          const imageResult = [];
+          console.log(result.rows);
+          result.rows.forEach((index) => imageResult.push(index.image));
+          createdProduct = { ...createdProduct, images: imageResult };
+          return resolve({
+            status: 200,
+            data: createdProduct,
+          });
         });
       });
     });
@@ -144,6 +165,7 @@ module.exports = {
             status: 404,
             msg: "Data Not Found",
           });
+
         return resolve({
           status: 200,
           msg: "List products",
