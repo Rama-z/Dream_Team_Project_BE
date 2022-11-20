@@ -51,9 +51,9 @@ module.exports = {
     return new Promise((resolve, reject) => {
       const {
         search,
-        category,
-        brand,
-        size,
+        categoryId,
+        brandId,
+        sizeId,
         color,
         sort,
         minPrice,
@@ -61,28 +61,62 @@ module.exports = {
         limit,
         page,
       } = params;
-      let query = `select p.id, p.product_name, p.price, p.description_product, s."size" as size, c2.color, ip.image, stock, sold, c.category, b.brand from products p
+      let query = `select distinct p.id, p.product_name, p.price, p.description_product, s."size" as size, c2.color, (select ip.image from image_products ip where ip.product_id = p.id limit 1), stock, sold, c.category, b.brand from products p
+      join product_category pc on pc.product_id = p.id 
       join brands b on b.id = p.brand_id 
-      join categories c on c.id = p.category_id 
+      join categories c on c.id = pc.category_id 
       join colors c2 on c2.id = p.color_id 
       join image_products ip on ip.product_id = p.id 
-      join sizes s on s.id = p.size_id`;
-      // let countQuery = "select count(p.id) as count from products p";
+      join sizes s on s.id = p.size_id `;
+      let countQuery = `select count(distinct p.id) from products p 
+      join brands b on b.id = p.brand_id 
+      join product_category pc on pc.product_id = p.id 
+      join categories c on c.id = pc.category_id 
+      join sizes s on s.id = p.size_id 
+      join image_products ip on ip.product_id = p.id 
+      join colors c2 on c2.id = p.color_id `;
       let link = `${api}/raz/product/?`;
-      if (category || brand || size || color || search || !search) {
+      if (categoryId || brandId || sizeId || color || search || !search) {
         query += ` where lower(p.product_name) like lower('%${
           search || ""
         }%') and lower(c.category) like lower('%${
-          category || ""
+          categoryId || ""
         }%') and lower(b.brand) like lower('%${
-          brand || ""
+          brandId || ""
         }%') and lower(s."size") like lower('%${
-          size || ""
-        }%') and lower(c2.color) like lower('%${color || ""}%') `;
-        link += `search=${search || ""}&category=${category || ""}&brand=${
-          brand || ""
-        }&size=${size || ""}&color=${color || ""}&`;
+          sizeId || ""
+        }%') and lower(c2.color) like lower('%${color || ""}%')  `;
+        countQuery += ` where lower(p.product_name) like lower('%${
+          search || ""
+        }%') and lower(c.category) like lower('%${
+          categoryId || ""
+        }%') and lower(b.brand) like lower('%${
+          brandId || ""
+        }%') and lower(s."size") like lower('%${
+          sizeId || ""
+        }%') and lower(c2.color) like lower('%${color || ""}%')  `;
+        link += `search=${search || ""}&category=${categoryId || ""}&brand=${
+          brandId || ""
+        }&size=${sizeId || ""}&color=${color || ""}&minPrice=${
+          minPrice || ""
+        }&maxPrice=${maxPrice || ""}`;
       }
+      if (minPrice && maxPrice) {
+        link += `minPrice=${minPrice}&maxPrice=${maxPrice}&`;
+        countQuery += `and p.price between ${minPrice} and ${maxPrice} `;
+        query += `and p.price between ${minPrice} and ${maxPrice} `;
+      }
+      if (!minPrice && maxPrice) {
+        link += `maxPrice=${maxPrice}&`;
+        countQuery += `and p.price <= ${maxPrice} `;
+        query += `and p.price <= ${maxPrice} `;
+      }
+      if (minPrice && !maxPrice) {
+        link += `minPrice=${minPrice}&`;
+        countQuery += `and p.price >= ${minPrice} `;
+        query += `and p.price >= ${minPrice} `;
+      }
+      // query += "group by p.id ";
       if (sort.toLowerCase() === "oldest") {
         query += "order by p.created_at asc ";
         link += "sort=oldest&";
@@ -97,61 +131,15 @@ module.exports = {
       }
       if (sort.toLowerCase() === "priciest") {
         query += "order by p.price desc ";
-        link += "sort=prciest&";
+        link += "sort=priciest&";
       }
       if (sort.toLowerCase() === "") {
         query += "";
         link += "sort=&";
       }
       query += ` limit ${limit || 12}`;
-      link += `page=${page || 1}&limit=${limit || 8}`;
-      console.log(link);
-      /* const sqlLimit = limit ? limit : 8;
-      const sqlOffset =
-        page || page === "1" ? 0 : (parseInt(page) - 1) * parseInt(sqlLimit); */
-      // console.log(sqlLimit);
-      // postgreDb.query(countQuery, (error, result) => {
-      //   if (error) {
-      //     console.log(error);
-      //     return reject({
-      //       status: 500,
-      //       msg: "internal Server Error",
-      //     });
-      //   }
-      // return resolve({ status: 200, msg: "success", data: result.rows });
-      // const totalData =
-      //   sort && sort.toLowerCase() === "popular"
-      //      result.rows.length
-      //     : result.rows[0].count;
-
-      // const currentPage = page ? parseInt(page) : 1;
-      // const totalPage =
-      //   parseInt(sqlLimit) > totalData
-      //      1
-      //     : Math.ceil(totalData / parseInt(sqlLimit));
-
-      // const prev =
-      //   currentPage === 1
-      //     (tanda tanya) null
-      //     : link + `page=${currentPage - 1}&limit=${parseInt(sqlLimit)}`;
-
-      // const next =
-      //   currentPage === totalPage
-      //      null
-      //     : link + `page=${currentPage + 1}&limit=${parseInt(sqlLimit)}`;
-      // const meta = {
-      //   page: currentPage,
-      //   totalPage,
-      //   limit: parseInt(sqlLimit),
-      //   totalData: parseInt(totalData),
-      //   prev,
-      //   next,
-      // };
-      // console.log(sqlLimit);
-      // console.log(sqlOffset);
-      // console.log(query);
-      // const value = [sqlLimit, sqlOffset];
-      postgreDb.query(query, (error, result) => {
+      console.log(countQuery);
+      postgreDb.query(countQuery, (error, result) => {
         if (error) {
           console.log(error);
           return reject({
@@ -159,22 +147,215 @@ module.exports = {
             msg: "internal Server Error",
           });
         }
-        // console.log(countQuery, "\n", query, totalData, result.rows.length);
+        if (result.rows.length === 0)
+          return reject({ status: 404, msg: "Product not found" });
+        const totalData = parseInt(result.rows[0].count);
+        const sqlLimit = limit ? limit : 12;
+        const sqlOffset =
+          !page || page === "1" ? 0 : (parseInt(page) - 1) * parseInt(sqlLimit);
+        const currentPage = parseInt(page) || 1;
+        const totalPage =
+          parseInt(sqlLimit) > totalData
+            ? 1
+            : Math.ceil(totalData / parseInt(sqlLimit));
+        const prev =
+          currentPage === 1
+            ? null
+            : link + `page=${currentPage - 1}&limit=${parseInt(sqlLimit)}`;
+        const next =
+          currentPage === totalPage
+            ? null
+            : link + `page=${currentPage + 1}&limit=${parseInt(sqlLimit)}`;
+        const meta = {
+          page: currentPage,
+          totalPage,
+          limit: parseInt(sqlLimit),
+          totalData: parseInt(totalData),
+          prev,
+          next,
+        };
+        console.log(query);
+        console.log(link);
+
+        const value = [sqlLimit, sqlOffset];
+        postgreDb.query(query, (error, result) => {
+          if (error) {
+            console.log(error);
+            return reject({
+              status: 500,
+              msg: "internal Server Error",
+            });
+          }
+          if (result.rows.length === 0)
+            return reject({
+              status: 404,
+              msg: "Data Not Found",
+            });
+          return resolve({
+            status: 200,
+            msg: "List products",
+            data: result.rows,
+            meta: meta || "",
+          });
+        });
+      });
+    });
+  },
+
+  searchRelatedProduct: (req) => {
+    return new Promise((resolve, reject) => {
+      const productId = [req.params.id];
+      const getBrandQuery = "select p.brand_id from products p where p.id = $1";
+      postgreDb.query(getBrandQuery, productId, (error, result) => {
+        console.log(getBrandQuery);
+        console.log(result.rows);
+        if (error) {
+          console.log(error);
+          return reject({ status: 500, msg: "Internal Server Error" });
+        }
         if (result.rows.length === 0)
           return reject({
             status: 404,
             msg: "Data Not Found",
           });
 
-        return resolve({
-          status: 200,
-          msg: "List products",
-          data: result.rows,
-          // meta: meta || "",
+        const brandId = result.rows[0].brand_id;
+        const getCategoryQuery =
+          "select pc.category_id from product_category pc where pc.product_id = $1";
+        postgreDb.query(getCategoryQuery, productId, (error, result) => {
+          console.log(result.rows);
+          if (error) {
+            console.log(error);
+            return reject({ status: 500, msg: "Internal Server Error" });
+          }
+          if (result.rows.length === 0)
+            return reject({
+              status: 404,
+              msg: "Data Not Found",
+            });
+          const categoryResult = result.rows;
+          console.log("sini?");
+          console.log(result.rows);
+          const categories = [];
+          categoryResult.forEach((category) =>
+            categories.push(category.category_id)
+          );
+          const prepareValues = [parseInt(productId), brandId];
+          let relatedQuery = `select distinct p.id, p.product_name, p.price, (select ip.image from image_products ip where ip.product_id = $1 limit 1) from products p
+          join product_category pc on pc.product_id = p.id
+          join categories c on c.id  = pc.category_id
+          where p.id != $1 and p.deleted_at is null and p.brand_id = $2 and c.id in (`;
+          categories.forEach((e, index, array) => {
+            if (index === array.length - 1) {
+              relatedQuery += `$${index + 3}`;
+              prepareValues.push(e);
+            } else {
+              relatedQuery += `$${index + 3}, `;
+              prepareValues.push(e);
+            }
+          });
+          relatedQuery += `) limit 9`;
+
+          postgreDb.query(relatedQuery, prepareValues, (error, result) => {
+            if (error) {
+              console.log(error);
+              return reject({
+                status: 500,
+                msg: "internal Server Error",
+              });
+            }
+            if (result.rows.length === 0) {
+              return reject({
+                status: 404,
+                msg: "Data Not Found",
+              });
+            }
+            return resolve({
+              status: 200,
+              msg: "Related Products",
+              data: result.rows,
+            });
+          });
         });
       });
     });
-    // });
+  },
+
+  searchSellerProduct: (queryParams, id, api) => {
+    return new Promise((resolve, reject) => {
+      const { filter, limit, page } = queryParams;
+      let link = `${api}/raz/product/seller?`;
+      let countQuery =
+        "select count(p.id) as count from products p where user_id = $1 ";
+      let query = `select p.id, p.product_name, p.price, (select ip.image from image_products ip where product_id = p.id limit 1) as image from products p 
+      where p.user_id = $1 `;
+
+      if (filter.toLowerCase() === "") {
+        countQuery += "and p.deleted_at is null ";
+        query += "and p.deleted_at is null ";
+        link += "filter=&";
+      }
+      if (filter.toLowerCase() === "archived") {
+        countQuery += "and p.deleted_at is not null and p.stock != 0 ";
+        query += "and p.deleted_at is not null and p.stock != 0 ";
+        link += "filter=archived&";
+      }
+      if (filter.toLowerCase() === "soldout") {
+        countQuery += "and p.stock = 0 ";
+        query += "and p.stock = 0 ";
+        link += "filter=sold-out&";
+      }
+      query += "limit $2 offset $3";
+      postgreDb.query(countQuery, [id], (error, result) => {
+        if (error) {
+          console.log(error);
+          return reject({ status: 500, msg: "Internal Server Error" });
+        }
+        if (parseInt(result.rows[0].count) === 0)
+          return reject({ status: 404, msg: "Product not found" });
+        const totalData = parseInt(result.rows[0].count);
+        const sqlLimit = limit ? parseInt(limit) : 5;
+        const sqlOffset =
+          !page || page == 1 ? 0 : (parseInt(page) - 1) * sqlLimit;
+        const currentPage = page ? parseInt(page) : 1;
+        const totalPage =
+          totalData < sqlLimit ? 1 : Math.ceil(totalData / sqlLimit);
+
+        const prev =
+          currentPage === 1
+            ? null
+            : link + `page=${currentPage - 1}&limit=${sqlLimit}`;
+        const next =
+          currentPage === totalPage
+            ? null
+            : link + `page=${currentPage + 1}&limit=${sqlLimit}`;
+
+        const meta = {
+          page: parseInt(currentPage),
+          totalData: parseInt(totalData),
+          limit: parseInt(sqlLimit),
+          prev,
+          next,
+        };
+        postgreDb.query(query, [id, sqlLimit, sqlOffset], (error, result) => {
+          if (error) {
+            console.log(error);
+            return reject({ status: 500, msg: "Internal Server Error" });
+          }
+          if (result.rows.length === 0)
+            return reject({
+              status: 404,
+              msg: "Data Not Found",
+            });
+          return resolve({
+            status: 201,
+            msg: `Your Product List`,
+            data: result.rows,
+            meta,
+          });
+        });
+      });
+    });
   },
 
   create: (body, id, file) => {
@@ -217,6 +398,11 @@ module.exports = {
               msg: "Internal Server Error",
             });
           }
+          if (result.rows.length === 0)
+            return reject({
+              status: 404,
+              msg: "Data Not Found",
+            });
           let createdProduct = { ...result.rows[0] };
           const productId = result.rows[0].id;
           let imageValues = "values";
@@ -285,6 +471,11 @@ module.exports = {
                       msg: "Internal Server Error",
                     });
                   }
+                  if (result.rows.length === 0)
+                    return reject({
+                      status: 404,
+                      msg: "Data Not Found",
+                    });
                   const categoryResult = [];
                   result.rows.forEach((category) =>
                     categoryResult.push(category.category_id)
