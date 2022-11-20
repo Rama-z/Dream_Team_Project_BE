@@ -20,12 +20,6 @@ mainRouter.use(`${prefix}/transaction`, transactionRouter);
 
 mainRouter.get("/", (req, res) => {
   res.json({
-    msg: "welcome in Raz Market",
-  });
-});
-
-mainRouter.get("/", (req, res) => {
-  res.json({
     msg: "Welcome to DreamTeam API",
   });
 });
