@@ -127,10 +127,14 @@ module.exports = {
       });
     });
   },
-  drop: (params) => {
+
+  deletePromo: (promoId) => {
     return new Promise((resolve, reject) => {
-      const query = "delete from promos where id = $1 returning *";
-      postgreDb.query(query, [params.id], (error, response) => {
+      console.log(promoId);
+      const timeStamp = Date.now() / 1000;
+      const query =
+        "update promos set deleted_at = to_timestamp($1) where id = $2 returning * ";
+      postgreDb.query(query, [timeStamp, promoId], (error, result) => {
         if (error) {
           console.log(error);
           return reject({
@@ -138,12 +142,15 @@ module.exports = {
             msg: "Internal server error",
           });
         }
-        if (response.rows.length === 0)
-          return reject({ status: 404, msg: "Data not Found" });
+        if (result.rows.length === 0)
+          return reject({
+            status: 404,
+            msg: "Data Not Found",
+          });
         return resolve({
           status: 200,
-          msg: `${response.rows[0]} deleted`,
-          data: { ...response.rows[0] },
+          msg: `Promos deleted`,
+          data: result.rows[0],
         });
       });
     });

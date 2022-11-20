@@ -61,7 +61,7 @@ module.exports = {
         limit,
         page,
       } = params;
-      let query = `select distinct p.id, p.product_name, p.price, p.description_product, s."size" as size, c2.color, ip.image, stock, sold, c.category, b.brand from products p
+      let query = `select distinct p.id, p.product_name, p.price, p.description_product, s."size" as size, c2.color, (select ip.image from image_products ip where ip.product_id = p.id limit 1), stock, sold, c.category, b.brand from products p
       join product_category pc on pc.product_id = p.id 
       join brands b on b.id = p.brand_id 
       join categories c on c.id = pc.category_id 
@@ -148,7 +148,10 @@ module.exports = {
           });
         }
         if (result.rows.length === 0)
-          return reject({ status: 404, msg: "Product not found" });
+          return reject({
+            status: 404,
+            msg: "Product not found",
+          });
         const totalData = parseInt(result.rows[0].count);
         const sqlLimit = limit ? limit : 12;
         const sqlOffset =
@@ -202,6 +205,162 @@ module.exports = {
     });
   },
 
+  searchRelatedProduct: (req) => {
+    return new Promise((resolve, reject) => {
+      const productId = [req.params.id];
+      const getBrandQuery = "select p.brand_id from products p where p.id = $1";
+      postgreDb.query(getBrandQuery, productId, (error, result) => {
+        console.log(getBrandQuery);
+        console.log(result.rows);
+        if (error) {
+          console.log(error);
+          return reject({ status: 500, msg: "Internal Server Error" });
+        }
+        if (result.rows.length === 0)
+          return reject({
+            status: 404,
+            msg: "Data Not Found",
+          });
+
+        const brandId = result.rows[0].brand_id;
+        const getCategoryQuery =
+          "select pc.category_id from product_category pc where pc.product_id = $1";
+        postgreDb.query(getCategoryQuery, productId, (error, result) => {
+          console.log(result.rows);
+          if (error) {
+            console.log(error);
+            return reject({ status: 500, msg: "Internal Server Error" });
+          }
+          if (result.rows.length === 0)
+            return reject({
+              status: 404,
+              msg: "Data Not Found",
+            });
+          const categoryResult = result.rows;
+          console.log("sini?");
+          console.log(result.rows);
+          const categories = [];
+          categoryResult.forEach((category) =>
+            categories.push(category.category_id)
+          );
+          const prepareValues = [parseInt(productId), brandId];
+          let relatedQuery = `select distinct p.id, p.product_name, p.price, (select ip.image from image_products ip where ip.product_id = $1 limit 1) from products p
+          join product_category pc on pc.product_id = p.id
+          join categories c on c.id  = pc.category_id
+          where p.id != $1 and p.deleted_at is null and p.brand_id = $2 and c.id in (`;
+          categories.forEach((e, index, array) => {
+            if (index === array.length - 1) {
+              relatedQuery += `$${index + 3}`;
+              prepareValues.push(e);
+            } else {
+              relatedQuery += `$${index + 3}, `;
+              prepareValues.push(e);
+            }
+          });
+          relatedQuery += `) limit 9`;
+
+          postgreDb.query(relatedQuery, prepareValues, (error, result) => {
+            if (error) {
+              console.log(error);
+              return reject({
+                status: 500,
+                msg: "internal Server Error",
+              });
+            }
+            if (result.rows.length === 0) {
+              return reject({
+                status: 404,
+                msg: "Data Not Found",
+              });
+            }
+            return resolve({
+              status: 200,
+              msg: "Related Products",
+              data: result.rows,
+            });
+          });
+        });
+      });
+    });
+  },
+
+  searchSellerProduct: (queryParams, id, api) => {
+    return new Promise((resolve, reject) => {
+      const { filter, limit, page } = queryParams;
+      let link = `${api}/raz/product/seller?`;
+      let countQuery =
+        "select count(p.id) as count from products p where user_id = $1 ";
+      let query = `select p.id, p.product_name, p.price, (select ip.image from image_products ip where product_id = p.id limit 1) as image from products p 
+      where p.user_id = $1 `;
+
+      if (filter.toLowerCase() === "") {
+        countQuery += "and p.deleted_at is null ";
+        query += "and p.deleted_at is null ";
+        link += "filter=&";
+      }
+      if (filter.toLowerCase() === "archived") {
+        countQuery += "and p.deleted_at is not null and p.stock != 0 ";
+        query += "and p.deleted_at is not null and p.stock != 0 ";
+        link += "filter=archived&";
+      }
+      if (filter.toLowerCase() === "soldout") {
+        countQuery += "and p.stock = 0 ";
+        query += "and p.stock = 0 ";
+        link += "filter=sold-out&";
+      }
+      query += "limit $2 offset $3";
+      postgreDb.query(countQuery, [id], (error, result) => {
+        if (error) {
+          console.log(error);
+          return reject({ status: 500, msg: "Internal Server Error" });
+        }
+        if (parseInt(result.rows[0].count) === 0)
+          return reject({ status: 404, msg: "Product not found" });
+        const totalData = parseInt(result.rows[0].count);
+        const sqlLimit = limit ? parseInt(limit) : 5;
+        const sqlOffset =
+          !page || page == 1 ? 0 : (parseInt(page) - 1) * sqlLimit;
+        const currentPage = page ? parseInt(page) : 1;
+        const totalPage =
+          totalData < sqlLimit ? 1 : Math.ceil(totalData / sqlLimit);
+
+        const prev =
+          currentPage === 1
+            ? null
+            : link + `page=${currentPage - 1}&limit=${sqlLimit}`;
+        const next =
+          currentPage === totalPage
+            ? null
+            : link + `page=${currentPage + 1}&limit=${sqlLimit}`;
+
+        const meta = {
+          page: parseInt(currentPage),
+          totalData: parseInt(totalData),
+          limit: parseInt(sqlLimit),
+          prev,
+          next,
+        };
+        postgreDb.query(query, [id, sqlLimit, sqlOffset], (error, result) => {
+          if (error) {
+            console.log(error);
+            return reject({ status: 500, msg: "Internal Server Error" });
+          }
+          if (result.rows.length === 0)
+            return reject({
+              status: 404,
+              msg: "Data Not Found",
+            });
+          return resolve({
+            status: 201,
+            msg: `Your Product List`,
+            data: result.rows,
+            meta,
+          });
+        });
+      });
+    });
+  },
+
   create: (body, id, file) => {
     return new Promise((resolve, reject) => {
       const images = file;
@@ -242,6 +401,11 @@ module.exports = {
               msg: "Internal Server Error",
             });
           }
+          if (result.rows.length === 0)
+            return reject({
+              status: 404,
+              msg: "Data Not Found",
+            });
           let createdProduct = { ...result.rows[0] };
           const productId = result.rows[0].id;
           let imageValues = "values";
@@ -310,6 +474,11 @@ module.exports = {
                       msg: "Internal Server Error",
                     });
                   }
+                  if (result.rows.length === 0)
+                    return reject({
+                      status: 404,
+                      msg: "Data Not Found",
+                    });
                   const categoryResult = [];
                   result.rows.forEach((category) =>
                     categoryResult.push(category.category_id)
@@ -369,7 +538,10 @@ module.exports = {
           });
         }
         if (result.rows.length === 0)
-          return reject({ status: 404, msg: "Data not Found" });
+          return reject({
+            status: 404,
+            msg: "Data Not Found",
+          });
         if (file) {
           return resolve({
             status: 200,
@@ -386,25 +558,33 @@ module.exports = {
     });
   },
 
-  drop: (params) => {
+  deleteProduct: (userId, productId) => {
     return new Promise((resolve, reject) => {
-      const query = "delete from products where id = $1 returning *";
-      postgreDb.query(query, [params.id], (error, response) => {
-        if (error) {
-          console.log(error);
-          return reject({
-            status: 500,
-            msg: "Internal server error",
+      console.log(userId);
+      console.log(productId);
+      const timeStamp = Date.now() / 1000;
+      const query =
+        "update products set deleted_at = to_timestamp($1) where user_id = $2 and id = $3 returning *";
+      postgreDb.query(
+        query,
+        [timeStamp, userId, productId],
+        (error, result) => {
+          if (error) {
+            console.log(error);
+            return reject({ status: 500, msg: "Internal Server Error" });
+          }
+          if (result.rows.length === 0)
+            return reject({
+              status: 404,
+              msg: "Data Not Found",
+            });
+          return resolve({
+            status: 200,
+            msg: "Product deleted",
+            data: result.rows[0],
           });
         }
-        if (response.rows.length === 0)
-          return reject({ status: 404, msg: "Data not Found" });
-        return resolve({
-          status: 200,
-          msg: `${response.rows[0].product_name} deleted`,
-          data: { ...response.rows[0] },
-        });
-      });
+      );
     });
   },
 };

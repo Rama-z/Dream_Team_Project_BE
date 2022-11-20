@@ -32,10 +32,33 @@ const create = async (req, res) => {
       req.userPayload.user_id,
       req.file
     );
-    sendResponse.success(res, 200, response);
+    sendResponse.success(res, response.status, response);
   } catch (error) {
     console.log(error);
-    return sendResponse.error(res, 500, error);
+    return sendResponse.error(res, error.status, error);
+  }
+};
+
+const searchRelatedProduct = async (req, res) => {
+  try {
+    const response = await repoProduct.searchRelatedProduct(req);
+    sendResponse.success(res, response.status, response);
+  } catch (error) {
+    sendResponse.error(res, error.status, error);
+  }
+};
+
+const searchSellerProduct = async (req, res) => {
+  try {
+    const hostApi = `${req.protocol}://${req.get("HOST")}`;
+    const response = await repoProduct.searchSellerProduct(
+      req.query,
+      req.userPayload.user_id,
+      hostApi
+    );
+    sendResponse.success(res, response.status, response);
+  } catch (error) {
+    sendResponse.error(res, error.status, error);
   }
 };
 
@@ -53,20 +76,25 @@ const update = async (req, res) => {
   }
 };
 
-const drop = async (req, res) => {
+const deleteProduct = async (req, res) => {
   try {
-    const response = await repoProduct.drop(req.params);
-    return sendResponse.success(res, response.status, response);
+    const response = await repoProduct.deleteProduct(
+      req.userPayload.user_id,
+      req.params.id
+    );
+    return sendResponse.success(res, 200, response);
   } catch (error) {
     console.log(error);
-    return sendResponse.error(res, error.status, error);
+    return sendResponse.error(res, 500, error);
   }
 };
 
 module.exports = {
   searchProduct,
   searchProductId,
+  searchRelatedProduct,
+  searchSellerProduct,
   create,
   update,
-  drop,
+  deleteProduct,
 };
