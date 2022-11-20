@@ -63,12 +63,14 @@ const transactionController = {
       await Promise.all(
         product_item.map(async (product) => {
           const { total_price, seller_id } = product;
+          const customer_id = req.userPayload.user_id;
           const totalPrice = total_price;
           const checkout_item = await transactionRepo.createTransactionItem(
             product,
             seller_id,
             transaction_id,
-            totalPrice
+            totalPrice,
+            customer_id
           );
           const temp = {
             transaction_id,
@@ -76,6 +78,7 @@ const transactionController = {
             product_id: product.product_id,
             quantity: product.quantity,
             totalPrice,
+            customer_id: customer_id,
           };
           transaction_item.push(temp);
         })
@@ -96,6 +99,8 @@ const transactionController = {
         order_id,
         status_order: body.status_order,
       };
+
+      console.log(result);
 
       await Promise.all(
         product_item.map(async (item) => {
@@ -259,6 +264,7 @@ const transactionController = {
       });
     }
   },
+
   handleMidtrans: async (req, res) => {
     const { order_id, transaction_status } = req.body;
     try {
@@ -284,17 +290,17 @@ const transactionController = {
     }
   },
 
-  getOrderTracking: async (req, res) => {
-    try {
-    } catch (error) {
-      console.log(error);
-      return response.response(res, {
-        error,
-        status: 500,
-        message: "Internal server error",
-      });
-    }
-  },
+  // getOrderTracking: async (req, res) => {
+  //   try {
+  //   } catch (error) {
+  //     console.log(error);
+  //     return response.response(res, {
+  //       error,
+  //       status: 500,
+  //       message: "Internal server error",
+  //     });
+  //   }
+  // },
 };
 
 module.exports = transactionController;

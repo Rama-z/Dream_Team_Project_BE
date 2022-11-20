@@ -11,7 +11,7 @@ module.exports = (...allowedRole) => {
       break;
     }
     if (!isAllowed)
-      return response(res, {
+      return response.response(res, {
         status: 403,
         message: "Can not access",
         data: null,
