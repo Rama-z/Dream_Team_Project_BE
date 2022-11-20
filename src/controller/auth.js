@@ -95,7 +95,12 @@ const auth = {
       await usersRepo.insertWhitelistToken(token);
       return response.response(res, {
         status: 200,
-        data: { email: payload.email, role: payload.role, token },
+        data: {
+          email: payload.email,
+          role: payload.role,
+          user_id: payload.user_id,
+          token,
+        },
         message: "Login success",
       });
     } catch (error) {

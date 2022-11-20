@@ -148,7 +148,10 @@ module.exports = {
           });
         }
         if (result.rows.length === 0)
-          return reject({ status: 404, msg: "Product not found" });
+          return reject({
+            status: 404,
+            msg: "Product not found",
+          });
         const totalData = parseInt(result.rows[0].count);
         const sqlLimit = limit ? limit : 12;
         const sqlOffset =
@@ -535,7 +538,10 @@ module.exports = {
           });
         }
         if (result.rows.length === 0)
-          return reject({ status: 404, msg: "Data not Found" });
+          return reject({
+            status: 404,
+            msg: "Data Not Found",
+          });
         if (file) {
           return resolve({
             status: 200,
@@ -552,25 +558,33 @@ module.exports = {
     });
   },
 
-  drop: (params) => {
+  deleteProduct: (userId, productId) => {
     return new Promise((resolve, reject) => {
-      const query = "delete from products where id = $1 returning *";
-      postgreDb.query(query, [params.id], (error, response) => {
-        if (error) {
-          console.log(error);
-          return reject({
-            status: 500,
-            msg: "Internal server error",
+      console.log(userId);
+      console.log(productId);
+      const timeStamp = Date.now() / 1000;
+      const query =
+        "update products set deleted_at = to_timestamp($1) where user_id = $2 and id = $3 returning *";
+      postgreDb.query(
+        query,
+        [timeStamp, userId, productId],
+        (error, result) => {
+          if (error) {
+            console.log(error);
+            return reject({ status: 500, msg: "Internal Server Error" });
+          }
+          if (result.rows.length === 0)
+            return reject({
+              status: 404,
+              msg: "Data Not Found",
+            });
+          return resolve({
+            status: 200,
+            msg: "Product deleted",
+            data: result.rows[0],
           });
         }
-        if (response.rows.length === 0)
-          return reject({ status: 404, msg: "Data not Found" });
-        return resolve({
-          status: 200,
-          msg: `${response.rows[0].product_name} deleted`,
-          data: { ...response.rows[0] },
-        });
-      });
+      );
     });
   },
 };
