@@ -6,14 +6,14 @@ const {
   searchPromoId,
   create,
   update,
-  drop,
+  deletePromo,
 } = require("../controller/promo");
 const { isLogin } = require("../middleware/isLogin");
 
 promoRouter.get("/", searchPromo);
 promoRouter.get("/:id", searchPromoId);
 promoRouter.post("/", create);
+promoRouter.patch("/delete/:id", isLogin, deletePromo);
 promoRouter.patch("/:id", update);
-promoRouter.delete("/:id", drop);
 
 module.exports = promoRouter;

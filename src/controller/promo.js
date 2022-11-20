@@ -41,9 +41,9 @@ const update = async (req, res) => {
   }
 };
 
-const drop = async (req, res) => {
+const deletePromo = async (req, res) => {
   try {
-    const response = await repoPromo.drop(req.params);
+    const response = await repoPromo.deletePromo(req.params.id);
     return sendResponse.success(res, response.status, response);
   } catch (error) {
     console.log(error);
@@ -56,5 +56,5 @@ module.exports = {
   searchPromoId,
   create,
   update,
-  drop,
+  deletePromo,
 };
