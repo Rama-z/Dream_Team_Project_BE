@@ -117,28 +117,28 @@ module.exports = {
         query += `and p.price >= ${minPrice} `;
       }
       // query += "group by p.id ";
-      if (sort.toLowerCase() === "oldest") {
+      if (sort && sort.toLowerCase() === "oldest") {
         query += "order by p.created_at asc ";
         link += "sort=oldest&";
       }
-      if (sort.toLowerCase() === "newest") {
+      if (sort && sort.toLowerCase() === "newest") {
         query += "order by p.created_at desc ";
         link += "sort=newest&";
       }
-      if (sort.toLowerCase() === "cheapest") {
+      if (sort && sort.toLowerCase() === "cheapest") {
         query += "order by p.price asc ";
         link += "sort=cheapest&";
       }
-      if (sort.toLowerCase() === "priciest") {
+      if (sort && sort.toLowerCase() === "priciest") {
         query += "order by p.price desc ";
         link += "sort=priciest&";
       }
-      if (sort.toLowerCase() === "") {
+      if (!sort) {
         query += "";
         link += "sort=&";
       }
       query += ` limit ${limit || 12}`;
-      console.log(countQuery);
+      // console.log(countQuery);
       postgreDb.query(countQuery, (error, result) => {
         if (error) {
           console.log(error);
@@ -293,17 +293,17 @@ module.exports = {
       let query = `select p.id, p.product_name, p.price, (select ip.image from image_products ip where product_id = p.id limit 1) as image from products p 
       where p.user_id = $1 `;
 
-      if (filter.toLowerCase() === "") {
+      if (filter && filter.toLowerCase() === "") {
         countQuery += "and p.deleted_at is null ";
         query += "and p.deleted_at is null ";
         link += "filter=&";
       }
-      if (filter.toLowerCase() === "archived") {
+      if (filter && filter.toLowerCase() === "archived") {
         countQuery += "and p.deleted_at is not null and p.stock != 0 ";
         query += "and p.deleted_at is not null and p.stock != 0 ";
         link += "filter=archived&";
       }
-      if (filter.toLowerCase() === "soldout") {
+      if (filter && filter.toLowerCase() === "soldout") {
         countQuery += "and p.stock = 0 ";
         query += "and p.stock = 0 ";
         link += "filter=sold-out&";
@@ -518,6 +518,7 @@ module.exports = {
         }
       }
       //
+      console.log(body);
       Object.keys(body).forEach((element, index, array) => {
         if (index === array.length - 1) {
           query += `${element} = $${index + 1}, updated_at = to_timestamp($${
