@@ -38,9 +38,32 @@ module.exports = {
           console.log(result.rows);
           result.rows.forEach((index) => imageResult.push(index.image));
           createdProduct = { ...createdProduct, images: imageResult };
-          return resolve({
-            status: 200,
-            data: createdProduct,
+          const categoryQuery = `select c.category from product_category pc
+            join products p on p.id = pc.product_id 
+            join categories c on pc.category_id = c.id 
+            where p.id = $1
+            `;
+          postgreDb.query(categoryQuery, [id], (error, result) => {
+            if (error) {
+              console.log(error);
+              return reject({
+                status: 500,
+                msg: "Internal Server Error",
+              });
+            }
+            if (result.rows === 0)
+              return reject({
+                status: 404,
+                msg: "Product Not Found",
+              });
+            const categoryResult = [];
+            console.log(result.rows);
+            result.rows.forEach((index) => categoryResult.push(index.category));
+            createdProduct = { ...createdProduct, categories: categoryResult };
+            return resolve({
+              status: 200,
+              data: createdProduct,
+            });
           });
         });
       });
@@ -258,7 +281,6 @@ module.exports = {
             }
           });
           relatedQuery += `) limit 9`;
-
           postgreDb.query(relatedQuery, prepareValues, (error, result) => {
             if (error) {
               console.log(error);
