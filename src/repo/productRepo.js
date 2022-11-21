@@ -99,43 +99,42 @@ module.exports = {
       join image_products ip on ip.product_id = p.id 
       join colors c2 on c2.id = p.color_id `;
       let link = `${api}/raz/product/?`;
-      if (categoryId || brandId || sizeId || color || search || !search) {
-        query += ` where lower(p.product_name) like lower('%${
-          search || ""
-        }%') and lower(c.category) like lower('%${
-          categoryId || ""
-        }%') and lower(b.brand) like lower('%${
-          brandId || ""
-        }%') and lower(s."size") like lower('%${
-          sizeId || ""
-        }%') and lower(c2.color) like lower('%${color || ""}%')  `;
-        countQuery += ` where lower(p.product_name) like lower('%${
-          search || ""
-        }%') and lower(c.category) like lower('%${
-          categoryId || ""
-        }%') and lower(b.brand) like lower('%${
-          brandId || ""
-        }%') and lower(s."size") like lower('%${
-          sizeId || ""
-        }%') and lower(c2.color) like lower('%${color || ""}%')  `;
-        link += `search=${search || ""}&category=${categoryId || ""}&brand=${
-          brandId || ""
-        }&size=${sizeId || ""}&color=${color || ""}&minPrice=${
-          minPrice || ""
-        }&maxPrice=${maxPrice || ""}`;
+      query += ` where lower(p.product_name) like lower('%${search || ""}%')`;
+      countQuery += ` where lower(p.product_name) like lower('%${
+        search || ""
+      }%')`;
+      if (categoryId) {
+        query += `and c.id = ${categoryId}`;
+        countQuery += `and c.id = ${categoryId}`;
       }
+      if (brandId) {
+        query += `and p.brand_id = ${brandId}`;
+        countQuery += `and p.brand_id = ${brandId}`;
+      }
+      if (sizeId) {
+        query += `and p.size_id = ${sizeId}`;
+        countQuery += `and p.size_id = ${sizeId}`;
+      }
+      if (color) {
+        query += `and p.color_id = ${color}`;
+        countQuery += `and p.color_id = ${color}`;
+      }
+      link += `search=${search || ""}&category=${categoryId || ""}&brand=${
+        brandId || ""
+      }&size=${sizeId || ""}&color=${color || ""}&`;
+
       if (minPrice && maxPrice) {
         link += `minPrice=${minPrice}&maxPrice=${maxPrice}&`;
         countQuery += `and p.price between ${minPrice} and ${maxPrice} `;
         query += `and p.price between ${minPrice} and ${maxPrice} `;
       }
       if (!minPrice && maxPrice) {
-        link += `maxPrice=${maxPrice}&`;
+        link += `maxPrice=${maxPrice || ""}&`;
         countQuery += `and p.price <= ${maxPrice} `;
         query += `and p.price <= ${maxPrice} `;
       }
       if (minPrice && !maxPrice) {
-        link += `minPrice=${minPrice}&`;
+        link += `minPrice=${minPrice || ""}&`;
         countQuery += `and p.price >= ${minPrice} `;
         query += `and p.price >= ${minPrice} `;
       }
@@ -160,8 +159,8 @@ module.exports = {
         query += "";
         link += "sort=&";
       }
-      query += ` limit ${limit || 12}`;
-      // console.log(countQuery);
+
+      console.log(countQuery);
       postgreDb.query(countQuery, (error, result) => {
         if (error) {
           console.log(error);
@@ -176,6 +175,9 @@ module.exports = {
             msg: "Product not found",
           });
         const totalData = parseInt(result.rows[0].count);
+        // console.log("result.rows[0].count");
+        console.log(result.rows[0].count);
+        // console.log(result.rows);
         const sqlLimit = limit ? limit : 12;
         const sqlOffset =
           !page || page === "1" ? 0 : (parseInt(page) - 1) * parseInt(sqlLimit);
@@ -201,10 +203,10 @@ module.exports = {
           next,
         };
         console.log(query);
-        console.log(link);
-
+        // console.log(link);
+        query += " limit $1 offset $2 ";
         const value = [sqlLimit, sqlOffset];
-        postgreDb.query(query, (error, result) => {
+        postgreDb.query(query, value, (error, result) => {
           if (error) {
             console.log(error);
             return reject({
