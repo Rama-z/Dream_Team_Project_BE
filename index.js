@@ -5,7 +5,7 @@ const postgreDb = require("./src/config/postgre");
 const mainRouter = require("./src/routes/mainRouter");
 const server = express();
 // init port
-const PORT = 8080;
+const PORT = 8090;
 const morgan = require("morgan");
 const logger = morgan(
   ":method :url :status :res[content-length] - :response-time ms"
