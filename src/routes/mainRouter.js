@@ -20,7 +20,7 @@ mainRouter.use(`${prefix}/transaction`, transactionRouter);
 
 mainRouter.get("/", (req, res) => {
   res.json({
-    msg: "welcome in Raz Market",
+    msg: "Welcome to DreamTeam API",
   });
 });
 
