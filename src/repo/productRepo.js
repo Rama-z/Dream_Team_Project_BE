@@ -260,7 +260,7 @@ module.exports = {
             categories.push(category.category_id)
           );
           const prepareValues = [parseInt(productId), brandId];
-          let relatedQuery = `select distinct p.id, p.product_name, p.price, (select ip.image from image_products ip where ip.product_id = $1 limit 1) from products p
+          let relatedQuery = `select distinct p.id, p.product_name, p.price, (select ip.image from image_products ip) from products p
           join product_category pc on pc.product_id = p.id
           join categories c on c.id  = pc.category_id
           where p.id != $1 and p.deleted_at is null and p.brand_id = $2 and c.id in (`;
@@ -577,29 +577,24 @@ module.exports = {
 
   deleteProduct: (userId, productId) => {
     return new Promise((resolve, reject) => {
-      const timeStamp = Date.now() / 1000;
       const query =
-        "update products set deleted_at = to_timestamp($1) where user_id = $2 and id = $3 returning *";
-      postgreDb.query(
-        query,
-        [timeStamp, userId, productId],
-        (error, result) => {
-          if (error) {
-            console.log(error);
-            return reject({ status: 500, msg: "Internal Server Error" });
-          }
-          if (result.rows.length === 0)
-            return reject({
-              status: 404,
-              msg: "Data Not Found",
-            });
-          return resolve({
-            status: 200,
-            msg: "Product deleted",
-            data: result.rows[0],
-          });
+        "update products set deleted_at = current_timestamp where user_id = $1 and id = $2 returning *";
+      postgreDb.query(query, [userId, productId], (error, result) => {
+        if (error) {
+          console.log(error);
+          return reject({ status: 500, msg: "Internal Server Error" });
         }
-      );
+        if (result.rows.length === 0)
+          return reject({
+            status: 404,
+            msg: "Data Not Found",
+          });
+        return resolve({
+          status: 200,
+          msg: "Product deleted",
+          data: result.rows[0],
+        });
+      });
     });
   },
 
