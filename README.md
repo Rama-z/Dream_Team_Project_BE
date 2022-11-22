@@ -15,7 +15,7 @@
 
   <p align="center">
     <br />
-    <a href="https://documenter.getpostman.com/view/16092081/2s847ESaDX"><strong>Explore the docs »</strong></a>
+    <a href="https://documenter.getpostman.com/view/23707258/2s8YmSsftj"><strong>Explore the docs »</strong></a>
     <br />
     <br />
     <a href="#">View Demo</a>
