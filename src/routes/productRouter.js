@@ -9,6 +9,7 @@ const {
   searchSellerProduct,
   update,
   deleteProduct,
+  getCategory,
 } = require("../controller/product");
 const { isLogin } = require("../middleware/isLogin");
 const { memoryUpload, errorHandler } = require("../middleware/upload");
@@ -16,6 +17,7 @@ const productUploader = require("../middleware/cloudinaryProduct.js");
 
 productRouter.get("/", searchProduct);
 productRouter.get("/seller", isLogin, searchSellerProduct);
+productRouter.get("/category", getCategory);
 productRouter.get("/related/:id", searchRelatedProduct);
 productRouter.post(
   "/",

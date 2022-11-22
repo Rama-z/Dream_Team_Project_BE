@@ -89,6 +89,16 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+const getCategory = async (req, res) => {
+  try {
+    const response = await repoProduct.getCategory();
+    console.log("asik");
+    sendResponse.success(res, response.status, response);
+  } catch (error) {
+    sendResponse.error(res, 500, error);
+  }
+};
+
 module.exports = {
   searchProduct,
   searchProductId,
@@ -97,4 +107,5 @@ module.exports = {
   create,
   update,
   deleteProduct,
+  getCategory,
 };

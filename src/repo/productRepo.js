@@ -35,7 +35,7 @@ module.exports = {
               msg: "Product Not Found",
             });
           const imageResult = [];
-          console.log(result.rows);
+
           result.rows.forEach((index) => imageResult.push(index.image));
           createdProduct = { ...createdProduct, images: imageResult };
           const categoryQuery = `select c.category from product_category pc
@@ -57,7 +57,6 @@ module.exports = {
                 msg: "Product Not Found",
               });
             const categoryResult = [];
-            console.log(result.rows);
             result.rows.forEach((index) => categoryResult.push(index.category));
             createdProduct = { ...createdProduct, categories: categoryResult };
             return resolve({
@@ -160,7 +159,6 @@ module.exports = {
         link += "sort=&";
       }
 
-      console.log(countQuery);
       postgreDb.query(countQuery, (error, result) => {
         if (error) {
           console.log(error);
@@ -175,9 +173,7 @@ module.exports = {
             msg: "Product not found",
           });
         const totalData = parseInt(result.rows[0].count);
-        // console.log("result.rows[0].count");
-        console.log(result.rows[0].count);
-        // console.log(result.rows);
+
         const sqlLimit = limit ? limit : 12;
         const sqlOffset =
           !page || page === "1" ? 0 : (parseInt(page) - 1) * parseInt(sqlLimit);
@@ -202,8 +198,7 @@ module.exports = {
           prev,
           next,
         };
-        console.log(query);
-        // console.log(link);
+
         query += " limit $1 offset $2 ";
         const value = [sqlLimit, sqlOffset];
         postgreDb.query(query, value, (error, result) => {
@@ -235,8 +230,6 @@ module.exports = {
       const productId = [req.params.id];
       const getBrandQuery = "select p.brand_id from products p where p.id = $1";
       postgreDb.query(getBrandQuery, productId, (error, result) => {
-        console.log(getBrandQuery);
-        console.log(result.rows);
         if (error) {
           console.log(error);
           return reject({ status: 500, msg: "Internal Server Error" });
@@ -251,7 +244,6 @@ module.exports = {
         const getCategoryQuery =
           "select pc.category_id from product_category pc where pc.product_id = $1";
         postgreDb.query(getCategoryQuery, productId, (error, result) => {
-          console.log(result.rows);
           if (error) {
             console.log(error);
             return reject({ status: 500, msg: "Internal Server Error" });
@@ -262,8 +254,7 @@ module.exports = {
               msg: "Data Not Found",
             });
           const categoryResult = result.rows;
-          console.log("sini?");
-          console.log(result.rows);
+
           const categories = [];
           categoryResult.forEach((category) =>
             categories.push(category.category_id)
@@ -314,7 +305,7 @@ module.exports = {
       let link = `${api}/raz/product/seller?`;
       let countQuery =
         "select count(p.id) as count from products p where user_id = $1 ";
-      let query = `select p.id, p.product_name, p.price, (select ip.image from image_products ip where product_id = p.id limit 1) as image from products p 
+      let query = `select p.id, p.product_name, p.price, (select ip.image from image_products ip where product_id = p.id limit 1) as image, p.stock from products p 
       where p.user_id = $1 `;
 
       if (filter && filter.toLowerCase() === "") {
@@ -332,7 +323,7 @@ module.exports = {
         query += "and p.stock = 0 ";
         link += "filter=sold-out&";
       }
-      query += "limit $2 offset $3";
+      query += "and p.deleted_at is not null limit $2 offset $3";
       postgreDb.query(countQuery, [id], (error, result) => {
         if (error) {
           console.log(error);
@@ -465,27 +456,29 @@ module.exports = {
               const categories = JSON.parse(category_id);
               const prepareCategoryValues = [];
               let categoryValues = "values";
-              categories.forEach((categoryId, index) => {
-                if (index !== categories.length - 1) {
-                  categoryValues += `($${1 + index * 4}, $${
-                    2 + index * 4
-                  }, to_timestamp($${3 + index * 4}), to_timestamp($${
-                    4 + index * 4
-                  })), `;
-                } else {
-                  categoryValues += `($${1 + index * 4}, $${
-                    2 + index * 4
-                  }, to_timestamp($${3 + index * 4}), to_timestamp($${
-                    4 + index * 4
-                  }))`;
-                }
-                prepareCategoryValues.push(
-                  productId,
-                  categoryId,
-                  timestamp,
-                  timestamp
-                );
-              });
+              if (categories) {
+                categories.forEach((categoryId, index) => {
+                  if (index !== categories.length - 1) {
+                    categoryValues += `($${1 + index * 4}, $${
+                      2 + index * 4
+                    }, to_timestamp($${3 + index * 4}), to_timestamp($${
+                      4 + index * 4
+                    })), `;
+                  } else {
+                    categoryValues += `($${1 + index * 4}, $${
+                      2 + index * 4
+                    }, to_timestamp($${3 + index * 4}), to_timestamp($${
+                      4 + index * 4
+                    }))`;
+                  }
+                  prepareCategoryValues.push(
+                    productId,
+                    categoryId,
+                    timestamp,
+                    timestamp
+                  );
+                });
+              }
               const insertCategotyQuery = `insert into product_category (product_id, category_id, created_at, updated_at) ${categoryValues} returning *`;
               postgreDb.query(
                 insertCategotyQuery,
@@ -541,8 +534,7 @@ module.exports = {
           query += `image = '${imageUrl}', `;
         }
       }
-      //
-      console.log(body);
+
       Object.keys(body).forEach((element, index, array) => {
         if (index === array.length - 1) {
           query += `${element} = $${index + 1}, updated_at = to_timestamp($${
@@ -585,8 +577,6 @@ module.exports = {
 
   deleteProduct: (userId, productId) => {
     return new Promise((resolve, reject) => {
-      console.log(userId);
-      console.log(productId);
       const timeStamp = Date.now() / 1000;
       const query =
         "update products set deleted_at = to_timestamp($1) where user_id = $2 and id = $3 returning *";
@@ -610,6 +600,28 @@ module.exports = {
           });
         }
       );
+    });
+  },
+
+  getCategory: () => {
+    return new Promise((resolve, reject) => {
+      const query = `select c.id, c.category, count(pc.product_id) as total_product from categories c 
+      join product_category pc on pc.category_id = c.id 
+      join products p on p.id = pc.product_id 
+      where p.deleted_at is null 
+      and p.stock != 0 
+      group by c.id`;
+      postgreDb.query(query, (error, result) => {
+        if (error) {
+          console.log(error);
+          return reject({ status: 500, msg: "Internal Server Error" });
+        }
+        return resolve({
+          status: 200,
+          msg: "List Categories",
+          data: result.rows,
+        });
+      });
     });
   },
 };
