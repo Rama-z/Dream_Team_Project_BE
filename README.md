@@ -11,7 +11,7 @@
     <img src="src/public/assets/dream-team-logo-white.png" alt="DREAM TEAM" width="80" height="80">
   </a>
 
-  <h2 align="center">MAMMI</h2>
+  <h2 align="center">DREAM TEAM</h2>
 
   <p align="center">
     <br />
