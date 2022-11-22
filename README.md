@@ -1,7 +1,7 @@
 <a id="readme-top"></a>
 
 <!-- <div align="center"> 
-  <h2>MAMMI - BACKEND</h2>
+  <h2>RAZ - Dream Team - BACKEND</h2>
 </div> -->
 
 <!-- PROJECT LOGO -->
