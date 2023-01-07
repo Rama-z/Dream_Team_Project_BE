@@ -3,9 +3,9 @@ const path = require("path");
 const cloudinary = require("../config/cloudinary");
 
 const uploaderProfile = async (req, res, next) => {
-  // console.log(req.userPayload.user_id);
   const id = req.userPayload.user_id;
   const { body, file } = req;
+  console.log(file);
   if (!file) return next();
 
   const parser = new DatauriParser();
@@ -23,7 +23,6 @@ const uploaderProfile = async (req, res, next) => {
       datauri.content,
       cloudinaryOpt
     );
-    console.log(result);
     req.file = result;
     next();
   } catch (err) {

@@ -10,8 +10,10 @@ const productUploader = async (req, res, next) => {
     req.file = [];
     files.forEach(async (element, index) => {
       try {
+        console.log(element);
         const parser = new DatauriParser();
         const buffer = element.buffer;
+        console.log(buffer);
         const ext = path.extname(element.originalname).toString();
         const datauri = parser.format(ext, buffer);
         const filesName = `image_${body.product_name}_${index + 1}`;

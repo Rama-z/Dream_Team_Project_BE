@@ -5,6 +5,7 @@ const response = require("../helper/response");
 const memoryStorage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
+  console.log("------");
   console.log(file);
   const ext = path.extname(file.originalname);
   if (ext !== ".png" && ext !== ".jpg" && ext !== ".jpeg") {

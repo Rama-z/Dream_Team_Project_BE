@@ -254,15 +254,15 @@ module.exports = {
               msg: "Data Not Found",
             });
           const categoryResult = result.rows;
-
           const categories = [];
           categoryResult.forEach((category) =>
             categories.push(category.category_id)
           );
           const prepareValues = [parseInt(productId), brandId];
-          let relatedQuery = `select distinct p.id, p.product_name, p.price, (select ip.image from image_products ip) from products p
+          let relatedQuery = `select distinct p.id, p.product_name, p.price, (select ip.image from image_products ip where ip.product_id = p.id limit 1) from products p
           join product_category pc on pc.product_id = p.id
           join categories c on c.id  = pc.category_id
+          join image_products ip on ip.product_id  = p.id
           where p.id != $1 and p.deleted_at is null and p.brand_id = $2 and c.id in (`;
           categories.forEach((e, index, array) => {
             if (index === array.length - 1) {
@@ -274,8 +274,11 @@ module.exports = {
             }
           });
           relatedQuery += `) limit 9`;
+          console.log(relatedQuery);
+          console.log(prepareValues);
           postgreDb.query(relatedQuery, prepareValues, (error, result) => {
             if (error) {
+              console.log("sini");
               console.log(error);
               return reject({
                 status: 500,
@@ -283,11 +286,13 @@ module.exports = {
               });
             }
             if (result.rows.length === 0) {
+              console.log("sini2");
               return reject({
                 status: 404,
                 msg: "Data Not Found",
               });
             }
+            console.log("sini3");
             return resolve({
               status: 200,
               msg: "Related Products",

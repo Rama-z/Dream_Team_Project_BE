@@ -3,15 +3,11 @@ const sendResponse = require("../helper/response");
 
 const searchProduct = async (req, res) => {
   try {
-    console.log(req.baseUrl);
-    console.log(req.route.path);
-    console.log(req.get("HOST"));
     const hostApi = `${req.protocol}://${req.get("HOST")}`;
     const response = await repoProduct.searchProduct(req.query, hostApi);
     return sendResponse.success(res, response.status, response);
-  } catch (error) {
-    console.log(error);
-    return sendResponse.error(res, error.status, error);
+  } catch (err) {
+    sendResponse.error(res, err.status || 500, err);
   }
 };
 
@@ -19,9 +15,8 @@ const searchProductId = async (req, res) => {
   try {
     const response = await repoProduct.searchProductId(req.params.id);
     sendResponse.success(res, response.status, response);
-  } catch (error) {
-    console.log(error);
-    return sendResponse.error(res, error.status, error);
+  } catch (err) {
+    sendResponse.error(res, err.status || 500, err);
   }
 };
 
@@ -33,9 +28,8 @@ const create = async (req, res) => {
       req.file
     );
     sendResponse.success(res, response.status, response);
-  } catch (error) {
-    console.log(error);
-    return sendResponse.error(res, error.status, error);
+  } catch (err) {
+    sendResponse.error(res, err.status || 500, err);
   }
 };
 
@@ -43,8 +37,8 @@ const searchRelatedProduct = async (req, res) => {
   try {
     const response = await repoProduct.searchRelatedProduct(req);
     sendResponse.success(res, response.status, response);
-  } catch (error) {
-    sendResponse.error(res, error.status, error);
+  } catch (err) {
+    sendResponse.error(res, err.status || 500, err);
   }
 };
 
@@ -57,8 +51,8 @@ const searchSellerProduct = async (req, res) => {
       hostApi
     );
     sendResponse.success(res, response.status, response);
-  } catch (error) {
-    sendResponse.error(res, error.status, error);
+  } catch (err) {
+    sendResponse.error(res, err.status || 500, err);
   }
 };
 
@@ -70,9 +64,8 @@ const update = async (req, res) => {
       req.file
     );
     return sendResponse.success(res, 200, response);
-  } catch (error) {
-    console.log(error);
-    return sendResponse.error(res, 500, error);
+  } catch (err) {
+    sendResponse.error(res, err.status || 500, err);
   }
 };
 
@@ -83,19 +76,17 @@ const deleteProduct = async (req, res) => {
       req.params.id
     );
     return sendResponse.success(res, 200, response);
-  } catch (error) {
-    console.log(error);
-    return sendResponse.error(res, 500, error);
+  } catch (err) {
+    sendResponse.error(res, err.status || 500, err);
   }
 };
 
 const getCategory = async (req, res) => {
   try {
     const response = await repoProduct.getCategory();
-    console.log("asik");
     sendResponse.success(res, response.status, response);
-  } catch (error) {
-    sendResponse.error(res, 500, error);
+  } catch (err) {
+    sendResponse.error(res, err.status || 500, err);
   }
 };
 

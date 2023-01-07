@@ -6,16 +6,13 @@ const usersController = {
   editPassword: async (req, res) => {
     const body = req.body;
     const id = req.userPayload.user_id;
-    console.log(id);
 
     try {
       const checkPwd = await usersRepo.getPassword(id);
-      // console.log(checkPwd.rows[0]);
       const isValid = await bcrypt.compare(
         body.old_password,
         checkPwd.rows[0].password
       );
-      //   console.log(isValid);
 
       if (isValid === false) {
         return response.response(res, {
@@ -62,7 +59,6 @@ const usersController = {
     try {
       const id = req.userPayload.user_id;
       let body = req.body;
-      console.log(req.file);
 
       if (req.file) {
         const image = `${req.file.secure_url}`;

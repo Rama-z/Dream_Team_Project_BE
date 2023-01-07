@@ -26,13 +26,11 @@ const transactionController = {
   createTransaction: async (req, res) => {
     try {
       const body = req.body;
-      console.log(req.userPayload);
       const user_id = req.userPayload.user_id;
       const order_id = `RAZ${Math.floor(Math.random() * 1000000000000000)}`;
       const payment_id = `RAZ-${Math.floor(
         Math.random() * 100000000000000000000
       )}`;
-      // console.log(order_id);
 
       const checkout = await transactionRepo.createTransaction(
         {
@@ -88,6 +86,7 @@ const transactionController = {
         body.payment_method,
         payment_id
       );
+
       return response.response(res, {
         status: 200,
         data: { result, midtrans },
@@ -213,6 +212,7 @@ const transactionController = {
       });
     }
   },
+
   handleMidtrans: async (req, res) => {
     const { order_id, transaction_status } = req.body;
     try {
