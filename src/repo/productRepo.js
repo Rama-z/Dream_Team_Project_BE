@@ -328,7 +328,7 @@ module.exports = {
         query += "and p.stock = 0 ";
         link += "filter=sold-out&";
       }
-      query += "and p.deleted_at is not null limit $2 offset $3";
+      query += "and p.deleted_at is null limit $2 offset $3";
       postgreDb.query(countQuery, [id], (error, result) => {
         if (error) {
           console.log(error);
