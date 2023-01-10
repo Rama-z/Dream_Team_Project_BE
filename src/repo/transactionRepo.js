@@ -116,7 +116,9 @@ const getTransactionBySeller = (user_id) => {
     let query =
       "select transaction.id, transaction_item.transaction_id, transaction_item.quantity, transaction_item.total_price, transaction.status_order, products.id as product_id, products.product_name, products.price from transaction_item inner join products on products.id = transaction_item.product_id left join transaction on transaction.id = transaction_item.transaction_id  where transaction_item.seller_id = $1";
     // query += ` LIMIT ${limit} OFFSET ${offset}`;
-    postgreDb.query(query, (error, result) => {
+    console.log("query");
+    console.log(query);
+    postgreDb.query(query, [user_id], (error, result) => {
       if (error) {
         console.log(error);
         return reject(error);
