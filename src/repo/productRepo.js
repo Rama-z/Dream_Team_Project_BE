@@ -458,7 +458,11 @@ module.exports = {
               const imageResult = [];
               result.rows.forEach((image) => imageResult.push(image.image));
               createdProduct = { ...createdProduct, image: imageResult };
-              const categories = JSON.parse(category_id);
+              console.log(category_id);
+              console.log(typeof category_id);
+              const categories = category_id.split(",");
+              // console.log(category_id);
+              console.log(categories);
               const prepareCategoryValues = [];
               let categoryValues = "values";
               if (categories) {
