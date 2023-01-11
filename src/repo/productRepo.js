@@ -337,7 +337,7 @@ module.exports = {
         if (parseInt(result.rows[0].count) === 0)
           return reject({ status: 404, msg: "Product not found" });
         const totalData = parseInt(result.rows[0].count);
-        const sqlLimit = limit ? parseInt(limit) : 5;
+        const sqlLimit = limit ? parseInt(limit) : 20;
         const sqlOffset =
           !page || page == 1 ? 0 : (parseInt(page) - 1) * sqlLimit;
         const currentPage = page ? parseInt(page) : 1;
